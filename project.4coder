@@ -1,0 +1,53 @@
+version(1);
+project_name = "base_code";
+
+patterns = {
+"*.c",
+"*.cpp",
+"*.h",
+"*.bat",
+"*.sh",
+"*.4coder",
+"*.txt",
+"*.zig",
+"*.glsl"
+};
+blacklist_patterns = {
+".*",
+};
+load_paths_only = {
+ {"src"},
+ {".", .recursive = false},
+ {"include/stb", .recursive = false},
+};
+load_paths = {
+ { load_paths_only, .os = "win"  },
+ { load_paths_only, .os = "linux"},
+ { load_paths_only, .os = "mac"  },
+};
+
+build_cmd = "zig build";
+build_run_cmd = "zig build run";
+test_cmd = "zig build test";
+
+command_list = {
+ { .name = "build",
+   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
+   .cmd = { {build_cmd, .os ="win"  },
+            {build_cmd, .os ="linux"},
+            {build_cmd, .os ="mac"  }, }, },
+ { .name = "build and run",
+   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
+   .cmd = { {build_run_cmd, .os ="win"  },
+            {build_run_cmd, .os ="linux"},
+            {build_run_cmd, .os ="mac"  }, }, },
+ { .name = "test",
+   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
+   .cmd = { {test_cmd, .os ="win"  },
+            {test_cmd, .os ="linux"},
+            {test_cmd, .os ="mac"  }, }, },
+};
+
+fkey_command[4] = "build";
+fkey_command[5] = "build and run";
+fkey_command[10] = "test";
