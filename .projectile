@@ -1,0 +1,7 @@
+-/include/stb/tools
+-/include/stb/tests
+-/include/stb/data
+-/include/stb/deprecated
+-/assets/fonts
+-/.vs
+-/*.sln
