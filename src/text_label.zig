@@ -8,16 +8,30 @@ const maths = @import("maths.zig");
 const console = @import("console.zig");
 
 pub const TextLabel = struct {
+    contents_ptr: usize,
     contents: []const u8,
-    render_groups: std.ArrayList(render_group.RenderGroup),
+    // render_groups: std.ArrayList(render_group.RenderGroup),
 
     pub fn new(contents: []const u8, renderer: *Renderer, allocator: *std.mem.Allocator) !TextLabel {
         var label = TextLabel{
-            .contents = contents,
-            .render_groups = std.ArrayList(render_group.RenderGroup).init(allocator),
+            .contents = contents[0..],
+            .contents_ptr = undefined,
+            // .render_groups = std.ArrayList(render_group.RenderGroup).init(allocator),
         };
-        try label.update_render_groups(allocator, renderer);
+        label.contents_ptr = @ptrToInt(label.contents.ptr);
+        label.check_contents("TextLabel.new");
+        // try label.update_render_groups(allocator, renderer);
         return label;
+    }
+
+    pub fn check_contents(self: *const TextLabel, message: []const u8) void {
+        console.debug("[TextLabel.check_contents/{}] contents.ptr: {}, self.contents_ptr: {}\n", .{ message, @ptrToInt(self.contents.ptr), self.contents_ptr });
+        std.debug.assert(@ptrToInt(self.contents.ptr) == self.contents_ptr);
+        console.debug("[TextLabel.check_contents/{}] text_label: {x}\n", .{ message, self.contents[0] });
+        console.debug("[TextLabel.check_contents/{}] contents: '{}', ({x}, {x}), len: ({}, {})\n", .{ message, self.contents[0..4], self.contents[0..4], "Pong", self.contents.len, "Pong".len });
+        // console.debug("[TextLabel.check_contents/{}] null: {}\n", .{ message, self.contents[4] });
+        std.debug.assert(std.mem.eql(u8, self.contents, "Pong"));
+        console.debug("[TextLabel.check_contents/{}] contents.ptr: {}, self.contents_ptr: {}\n", .{ message, @ptrToInt(self.contents.ptr), self.contents_ptr });
     }
 
     pub fn update_render_groups(self: *TextLabel, allocator: *std.mem.Allocator, renderer: *Renderer) !void {
@@ -48,6 +62,7 @@ pub const TextLabel = struct {
         var line_it = (try std.unicode.Utf8View.init(self.contents)).iterator();
         while (line_it.nextCodepoint()) |char_u21| {
             const character = @intCast(c_int, char_u21);
+            console.debug("character: {x} ({d}), c_int: {x} ({d})\n", .{ char_u21, char_u21, character, character });
             const glyph_idx = c.stbtt_FindGlyphIndex(&renderer.font.info, character);
             c.stbtt_GetGlyphHMetrics(&renderer.font.info, glyph_idx, &advance, &lsb);
             c.stbtt_GetGlyphBitmapBox(&renderer.font.info, glyph_idx, scale, scale, &x0, &y0, &x1, &y1);

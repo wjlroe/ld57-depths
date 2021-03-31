@@ -92,8 +92,10 @@ pub fn main() anyerror!void {
     }
 
     game = try Game.new(allocator, &renderer);
-
+    game.check_labels("after game.new");
+    game.check_labels("after game.new (take 2)");
     glfwSwapInterval(1);
+    game.check_labels("after swapinterval");
 
     const renderer_info = open_gl.glGetString(GL_RENDERER);
     const version = open_gl.glGetString(GL_VERSION);
@@ -105,7 +107,14 @@ pub fn main() anyerror!void {
 
     var previous_frame_time: f64 = glfwGetTime();
 
+    game.check_labels("before render");
+    // for (game.text_labels) |*label| {
+    //     std.debug.assert((label.contents[0] >= 32) and (label.contents[0] <= 126));
+    //     console.debug("working text_label: {x}\n", .{label.contents[0]});
+    // }
+
     while (glfwWindowShouldClose(window) == 0) {
+        game.check_labels("enter while loop");
         var viewport = [_]c_int{ 0, 0, 0, 0 };
         glfwGetFramebufferSize(window, &viewport[2], &viewport[3]);
         renderer.set_viewport(viewport);
@@ -116,7 +125,8 @@ pub fn main() anyerror!void {
 
         {
             // Render stuff now
-            game.prepare_render(dt);
+            game.check_labels("render");
+            // game.prepare_render(dt);
             try renderer.render();
         }
 
