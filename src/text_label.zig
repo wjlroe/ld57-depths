@@ -11,12 +11,14 @@ pub const TextLabel = struct {
     contents_ptr: usize,
     contents: []const u8,
     render_groups: std.ArrayList(render_group.RenderGroup),
+    bounding_box: Rect,
 
     pub fn new(contents: []const u8, renderer: *Renderer, allocator: *std.mem.Allocator) !TextLabel {
         var label = TextLabel{
             .contents = contents[0..],
             .contents_ptr = undefined,
             .render_groups = std.ArrayList(render_group.RenderGroup).init(allocator),
+            .bounding_box = Rect.from_bounds(0.0, 0.0),
         };
         label.contents_ptr = @ptrToInt(label.contents.ptr);
         try label.update_render_groups(allocator, renderer);
@@ -24,13 +26,12 @@ pub const TextLabel = struct {
     }
 
     pub fn update_render_groups(self: *TextLabel, allocator: *std.mem.Allocator, renderer: *Renderer) !void {
-        // TODO: assume centered within viewport!
         _ = self.render_groups.toOwnedSlice(); // clear down the existing items
 
-        var positions = std.ArrayList(Rect).init(allocator);
-
-        var x: f32 = 0.0;
-        var y: f32 = 0.0;
+        // The position of the bounding box can be changed to move this label around
+        const xy = self.bounding_box.top_left();
+        var x: f32 = xy[0];
+        var y: f32 = xy[1];
         var x0: c_int = undefined;
         var y0: c_int = undefined;
         var x1: c_int = undefined;
@@ -43,15 +44,14 @@ pub const TextLabel = struct {
         var ascent: c_int = undefined;
         var descent: c_int = undefined;
         var line_gap: c_int = undefined;
+        // TODO: move these into the renderer.font structure
         c.stbtt_GetFontVMetrics(&renderer.font.info, &ascent, &descent, &line_gap);
         const line_height = scale * (@intToFloat(f32, ascent) - @intToFloat(f32, descent) + @intToFloat(f32, line_gap));
         const tex_dim = @intToFloat(f32, renderer.font.texture_dim);
-        var total_width: f32 = 0.0;
 
         var line_it = (try std.unicode.Utf8View.init(self.contents)).iterator();
         while (line_it.nextCodepoint()) |char_u21| {
             const character = @intCast(c_int, char_u21);
-            console.debug("character: {x} ({d}), c_int: {x} ({d})\n", .{ char_u21, char_u21, character, character });
             const glyph_idx = c.stbtt_FindGlyphIndex(&renderer.font.info, character);
             c.stbtt_GetGlyphHMetrics(&renderer.font.info, glyph_idx, &advance, &lsb);
             c.stbtt_GetGlyphBitmapBox(&renderer.font.info, glyph_idx, scale, scale, &x0, &y0, &x1, &y1);
@@ -66,14 +66,18 @@ pub const TextLabel = struct {
                 font_render_group.set_texture("texture1", .{ .slot = 0, .texture_id = renderer.font.texture_id });
 
                 const width = @intToFloat(f32, x1 - x0);
-                total_width += width;
                 const left_edge_x: f32 = x;
                 const right_edge_x: f32 = x + width;
                 const height = @intToFloat(f32, y1 - y0);
+                if (character == 'P') {
+                    std.debug.warn("height of P: {d: >3}, height*scale: {d: >3}\n", .{ height, height * scale });
+                }
                 const left_edge_y: f32 = y + line_height - height + @intToFloat(f32, y1);
                 const right_edge_y: f32 = y + line_height + @intToFloat(f32, y1);
                 const pos = Rect.from_top_left_bottom_right(left_edge_x, left_edge_y, right_edge_x, right_edge_y);
-                try positions.append(pos);
+                // TODO: do we really wanna position within the viewport rect?
+                var transform_matrix: maths.Matrix4 = pos.transform_within(renderer.viewport_rect);
+                font_render_group.set_mat4("pos_transform", transform_matrix);
                 const packed_char_rect = Rect.from_top_left_bottom_right(@intToFloat(f32, packed_char.x0) / tex_dim, @intToFloat(f32, packed_char.y0) / tex_dim, @intToFloat(f32, packed_char.x1) / tex_dim, @intToFloat(f32, packed_char.y1) / tex_dim);
                 const tex_transform = packed_char_rect.within_texture_coords();
                 font_render_group.set_mat4("tex_transform", tex_transform);
@@ -82,21 +86,9 @@ pub const TextLabel = struct {
                 x += @intToFloat(f32, advance) * scale;
             }
         }
-        const width = x;
-        const height = scale * (@intToFloat(f32, ascent) - @intToFloat(f32, descent));
+        const width = x - xy[0];
+        const height = scale * @intToFloat(f32, ascent);
+        self.bounding_box.bounds = [_]f32{ width, height };
         console.debug("line_height: {d: >3}, height: {d: >3}, scale: {d: >3}, ascent: {d: >3}, descent: {d: >3}, line_gap: {d: >3}\n", .{ line_height, height, scale, ascent, descent, line_gap });
-
-        // recalc positions
-        const x_offset = renderer.viewport_rect.center[0] - (total_width / 2.0);
-        const y_offset = renderer.viewport_rect.center[1] - height;
-
-        // create render groups
-        for (positions.items) |untransformed_pos, i| {
-            var pos = untransformed_pos;
-            pos.center[0] += x_offset;
-            pos.center[1] += y_offset;
-            var transform_matrix: maths.Matrix4 = pos.transform_within(renderer.viewport_rect);
-            self.render_groups.items[i].set_mat4("pos_transform", transform_matrix);
-        }
     }
 };

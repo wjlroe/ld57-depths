@@ -49,6 +49,13 @@ pub const Rect = packed struct {
         // return scale_matrix.mul(translation_matrix);
         return translation_matrix.mul(scale_matrix);
     }
+
+    pub fn top_left(self: Rect) [2]f32 {
+        return [_]f32{
+            self.center[0] - (self.bounds[0] / 2.0),
+            self.center[1] - (self.bounds[1] / 2.0),
+        };
+    }
 };
 
 pub fn rect_to_transform_matrix(s0: f32, t0: f32, s1: f32, t1: f32) Matrix4 {

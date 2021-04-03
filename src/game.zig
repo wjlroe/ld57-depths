@@ -4,6 +4,8 @@ const Renderer = @import("opengl_renderer.zig").Renderer;
 const TextLabel = @import("text_label.zig").TextLabel;
 const console = @import("console.zig");
 const colours = @import("colours.zig");
+const Rect = @import("rect.zig").Rect;
+const layout = @import("layout.zig");
 
 const GAME_TITLE: []const u8 = "Pong";
 const START_GAME: []const u8 = "Start Game";
@@ -25,7 +27,22 @@ pub const Game = struct {
             try TextLabel.new(START_GAME, renderer, allocator),
             try TextLabel.new(QUIT_GAME, renderer, allocator),
         };
+        try game.update_layout();
         return game;
+    }
+
+    fn update_layout(self: *Game) !void {
+        var bounding_boxes = &[_]*Rect{
+            &self.text_labels[0].bounding_box,
+            &self.text_labels[1].bounding_box,
+            &self.text_labels[2].bounding_box,
+        };
+        layout.layout_vertically(bounding_boxes, 2.0);
+        layout.center_vertically(bounding_boxes, self.renderer.viewport_rect);
+        layout.center_horizontally(bounding_boxes, self.renderer.viewport_rect);
+        for (self.text_labels) |*label| {
+            try label.update_render_groups(self.allocator, self.renderer);
+        }
     }
 
     pub fn prepare_render(self: *Game, dt: f64) void {
@@ -35,6 +52,11 @@ pub const Game = struct {
         }
         for (self.text_labels) |*label| {
             std.debug.assert((label.contents[0] >= 32) and (label.contents[0] <= 126));
+            if (self.debug_render) {
+                for (self.renderer.outline_as_render_group("textLabelOutline", label.bounding_box, colours.BLUE, 0.8, 1.0)) |group| {
+                    self.renderer.push_render_group(group);
+                }
+            }
             for (label.render_groups.items) |render_group| {
                 self.renderer.push_render_group(render_group);
             }
