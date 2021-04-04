@@ -6,10 +6,22 @@ const console = @import("console.zig");
 const colours = @import("colours.zig");
 const Rect = @import("rect.zig").Rect;
 const layout = @import("layout.zig");
+const maths = @import("maths.zig");
+const Vec2 = maths.Vec2;
 
 const GAME_TITLE: []const u8 = "Pong";
 const START_GAME: []const u8 = "Start Game";
 const QUIT_GAME: []const u8 = "Quit";
+
+const GameStateTag = enum {
+    Menu,
+    Pong,
+};
+
+const GameState = union(GameStateTag) {
+    Menu: void,
+    Pong: void,
+};
 
 pub const Game = struct {
     running: bool = true,
@@ -17,6 +29,8 @@ pub const Game = struct {
     renderer: *Renderer,
     allocator: *std.mem.Allocator,
     text_labels: [3]TextLabel,
+    mouse_position: Vec2(f32) = Vec2(f32).new_point(0.0, 0.0),
+    game_state: GameState = GameState.GameStateTag.Menu,
 
     pub fn new(allocator: *std.mem.Allocator, renderer: *Renderer) !*Game {
         var game = try allocator.create(Game);
@@ -43,6 +57,11 @@ pub const Game = struct {
         for (self.text_labels) |*label| {
             try label.update_render_groups(self.allocator, self.renderer);
         }
+    }
+
+    pub fn update_mouse_position(self: *Game, xpos: f64, ypos: f64) void {
+        self.mouse_position.xy.x = @floatCast(f32, xpos);
+        self.mouse_position.xy.y = @floatCast(f32, ypos);
     }
 
     pub fn prepare_render(self: *Game, dt: f64) void {

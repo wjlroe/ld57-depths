@@ -50,6 +50,10 @@ fn key_typed(window: ?*GLFWwindow, key: c_int, scancode: c_int, action: c_int, m
     }
 }
 
+fn cursor_position_changed(window: ?*GLFWwindow, xpos: f64, ypos: f64) callconv(.C) void {
+    game.update_mouse_position(xpos, ypos);
+}
+
 pub fn main() anyerror!void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     var allocator = &gpa.allocator;
@@ -75,6 +79,7 @@ pub fn main() anyerror!void {
 
     // _ = glfwSetCharCallback(window, character_typed);
     _ = glfwSetKeyCallback(window, key_typed);
+    _ = glfwSetCursorPosCallback(window, cursor_position_changed);
 
     glfwMakeContextCurrent(window);
 
