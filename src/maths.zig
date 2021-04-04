@@ -2,47 +2,69 @@ const std = @import("std");
 const testing = std.testing;
 const console = @import("console.zig");
 
-pub const Vec4 = packed union {
-    xyzw: packed struct {
-        x: f32,
-        y: f32,
-        z: f32,
-        w: f32,
-    },
-    rgba: packed struct {
-        r: f32,
-        g: f32,
-        b: f32,
-        a: f32,
-    },
-    array: [4]f32,
+pub fn Vec2(comptime T: type) type {
+    return packed union {
+        const Self = @This();
 
-    pub fn new_point(x: f32, y: f32, z: f32, w: f32) Vec4 {
-        return Vec4{
-            .xyzw = .{
-                .x = x,
-                .y = y,
-                .z = z,
-                .w = w,
-            },
-        };
-    }
+        xy: packed struct {
+            x: T,
+            y: T,
+        },
+        array: [2]T,
 
-    pub fn new_colour(r: f32, g: f32, b: f32, a: f32) Vec4 {
-        return Vec4{ .rgba = .{ .r = r, .g = g, .b = b, .a = a } };
-    }
+        pub fn new_point(x: T, y: T) Self {
+            return Self{
+                .xy = .{ .x = x, .y = y },
+            };
+        }
+    };
+}
 
-    pub fn print_to_string(self: Vec4, allocator: *std.mem.Allocator) ![]const u8 {
-        const vec = self.xyzw;
-        return std.fmt.allocPrint(allocator, "Vec4( {d:.5}, {d:.5}, {d:.5}, {d:.5} )", .{ vec.x, vec.y, vec.z, vec.w });
-    }
+pub fn Vec4(comptime T: type) type {
+    return packed union {
+        const Self = @This();
 
-    pub fn print(self: Vec4, allocator: *std.mem.Allocator) !void {
-        const as_string = try self.print_to_string(allocator);
-        defer allocator.free(as_string);
-        console.debug("{}\n", .{as_string});
-    }
-};
+        xyzw: packed struct {
+            x: T,
+            y: T,
+            z: T,
+            w: T,
+        },
+        rgba: packed struct {
+            r: T,
+            g: T,
+            b: T,
+            a: T,
+        },
+        array: [4]T,
+
+        pub fn new_point(x: T, y: T, z: T, w: T) Self {
+            return Vec4{
+                .xyzw = .{
+                    .x = x,
+                    .y = y,
+                    .z = z,
+                    .w = w,
+                },
+            };
+        }
+
+        pub fn new_colour(r: T, g: T, b: T, a: T) Self {
+            return Vec4{ .rgba = .{ .r = r, .g = g, .b = b, .a = a } };
+        }
+
+        pub fn print_to_string(self: Self, allocator: *std.mem.Allocator) ![]const u8 {
+            const vec = self.xyzw;
+            return std.fmt.allocPrint(allocator, "Vec4( {d:.5}, {d:.5}, {d:.5}, {d:.5} )", .{ vec.x, vec.y, vec.z, vec.w });
+        }
+
+        pub fn print(self: Self, allocator: *std.mem.Allocator) !void {
+            const as_string = try self.print_to_string(allocator);
+            defer allocator.free(as_string);
+            console.debug("{}\n", .{as_string});
+        }
+    };
+}
 
 test "vec4 union" {
     var colour = Vec4.new_colour(0.5, 0.4, 0.3, 0.2);

@@ -26,7 +26,7 @@ pub const RenderGroup = struct {
     shader: *Shader,
     render_element: RenderElement,
     depth_testing: bool = true,
-    inputs_vec4: std.AutoHashMap([*c]const u8, maths.Vec4),
+    inputs_vec4: std.AutoHashMap([*c]const u8, maths.Vec4(f32)),
     inputs_mat4: std.AutoHashMap([*c]const u8, maths.Matrix4),
     inputs_int: std.AutoHashMap([*c]const u8, i32),
     inputs_float: std.AutoHashMap([*c]const u8, f32),
@@ -38,7 +38,7 @@ pub const RenderGroup = struct {
             .name_len = @intCast(c_int, std.mem.len(name)),
             .shader = shader,
             .render_element = RenderElement{ .Quad = quad },
-            .inputs_vec4 = std.AutoHashMap([*c]const u8, maths.Vec4).init(allocator),
+            .inputs_vec4 = std.AutoHashMap([*c]const u8, maths.Vec4(f32)).init(allocator),
             .inputs_mat4 = std.AutoHashMap([*c]const u8, maths.Matrix4).init(allocator),
             .inputs_int = std.AutoHashMap([*c]const u8, i32).init(allocator),
             .inputs_float = std.AutoHashMap([*c]const u8, f32).init(allocator),
@@ -59,7 +59,7 @@ pub const RenderGroup = struct {
         self.inputs_mat4.put(name, value) catch unreachable;
     }
 
-    pub fn set_vec4(self: *RenderGroup, name: [*c]const u8, value: maths.Vec4) void {
+    pub fn set_vec4(self: *RenderGroup, name: [*c]const u8, value: maths.Vec4(f32)) void {
         self.inputs_vec4.put(name, value) catch unreachable;
     }
 
