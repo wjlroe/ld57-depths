@@ -23,9 +23,9 @@ pub const Game = struct {
         game.renderer = renderer;
         game.allocator = allocator;
         game.text_labels = [_]TextLabel{
-            try TextLabel.new(GAME_TITLE, renderer, allocator),
-            try TextLabel.new(START_GAME, renderer, allocator),
-            try TextLabel.new(QUIT_GAME, renderer, allocator),
+            try TextLabel.new(GAME_TITLE, &renderer.title_font, renderer, allocator),
+            try TextLabel.new(START_GAME, &renderer.menu_item_font, renderer, allocator),
+            try TextLabel.new(QUIT_GAME, &renderer.menu_item_font, renderer, allocator),
         };
         try game.update_layout();
         return game;

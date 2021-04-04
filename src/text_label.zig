@@ -6,19 +6,22 @@ const Rect = @import("rect.zig").Rect;
 const colours = @import("colours.zig");
 const maths = @import("maths.zig");
 const console = @import("console.zig");
+const Font = @import("fonts.zig").Font;
 
 pub const TextLabel = struct {
     contents_ptr: usize,
     contents: []const u8,
     render_groups: std.ArrayList(render_group.RenderGroup),
     bounding_box: Rect,
+    font: *Font,
 
-    pub fn new(contents: []const u8, renderer: *Renderer, allocator: *std.mem.Allocator) !TextLabel {
+    pub fn new(contents: []const u8, font: *Font, renderer: *Renderer, allocator: *std.mem.Allocator) !TextLabel {
         var label = TextLabel{
             .contents = contents[0..],
             .contents_ptr = undefined,
             .render_groups = std.ArrayList(render_group.RenderGroup).init(allocator),
             .bounding_box = Rect.from_bounds(0.0, 0.0),
+            .font = font,
         };
         label.contents_ptr = @ptrToInt(label.contents.ptr);
         try label.update_render_groups(allocator, renderer);
@@ -39,23 +42,23 @@ pub const TextLabel = struct {
         var advance: c_int = undefined;
         var lsb: c_int = undefined;
 
-        const pixel_height = renderer.font.font_size;
-        const scale = c.stbtt_ScaleForPixelHeight(&renderer.font.info, pixel_height);
+        const pixel_height = self.font.font_size;
+        const scale = c.stbtt_ScaleForPixelHeight(&self.font.info, pixel_height);
         var ascent: c_int = undefined;
         var descent: c_int = undefined;
         var line_gap: c_int = undefined;
         // TODO: move these into the renderer.font structure
-        c.stbtt_GetFontVMetrics(&renderer.font.info, &ascent, &descent, &line_gap);
+        c.stbtt_GetFontVMetrics(&self.font.info, &ascent, &descent, &line_gap);
         const line_height = scale * (@intToFloat(f32, ascent) - @intToFloat(f32, descent) + @intToFloat(f32, line_gap));
-        const tex_dim = @intToFloat(f32, renderer.font.texture_dim);
+        const tex_dim = @intToFloat(f32, self.font.texture_dim);
 
         var line_it = (try std.unicode.Utf8View.init(self.contents)).iterator();
         while (line_it.nextCodepoint()) |char_u21| {
             const character = @intCast(c_int, char_u21);
-            const glyph_idx = c.stbtt_FindGlyphIndex(&renderer.font.info, character);
-            c.stbtt_GetGlyphHMetrics(&renderer.font.info, glyph_idx, &advance, &lsb);
-            c.stbtt_GetGlyphBitmapBox(&renderer.font.info, glyph_idx, scale, scale, &x0, &y0, &x1, &y1);
-            const maybe_packed_char = renderer.font.packed_char(@intCast(usize, character));
+            const glyph_idx = c.stbtt_FindGlyphIndex(&self.font.info, character);
+            c.stbtt_GetGlyphHMetrics(&self.font.info, glyph_idx, &advance, &lsb);
+            c.stbtt_GetGlyphBitmapBox(&self.font.info, glyph_idx, scale, scale, &x0, &y0, &x1, &y1);
+            const maybe_packed_char = self.font.packed_char(@intCast(usize, character));
             if (maybe_packed_char) |packed_char| {
                 var font_render_group = render_group.RenderGroup.new_quad(allocator, &renderer.quad_shader, &renderer.gl_quad, "charInFont");
                 font_render_group.depth_testing = false;
@@ -63,7 +66,7 @@ pub const TextLabel = struct {
                 font_render_group.set_vec4("color", colours.BLUE);
                 font_render_group.set_int("sample_texture", 1);
                 font_render_group.set_mat4("tex_transform", maths.Matrix4.identity());
-                font_render_group.set_texture("texture1", .{ .slot = 0, .texture_id = renderer.font.texture_id });
+                font_render_group.set_texture("texture1", .{ .slot = 0, .texture_id = self.font.texture_id });
 
                 const width = @intToFloat(f32, x1 - x0);
                 const left_edge_x: f32 = x;

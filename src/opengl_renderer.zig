@@ -144,7 +144,8 @@ fn compile_shader(allocator: *std.mem.Allocator, opengl: *OpenGL, shader_type: c
 
 pub const Renderer = struct {
     opengl: *OpenGL,
-    font: Font,
+    title_font: Font,
+    menu_item_font: Font,
     gl_quad: GLQuad,
     quad_shader: Shader,
     viewport: [4]c_int,
@@ -189,12 +190,14 @@ pub const Renderer = struct {
         // opengl.glGetIntegerv(c.GL_VIEWPORT, &viewport_data[0]);
         // console.debug("Viewport. width={}, height={}\n", .{ viewport_data[2], viewport_data[3] });
 
-        var font = try Font.new_neuton(allocator, opengl, 400.0, 0);
+        var title_font = try Font.new_neuton(allocator, opengl, 200.0, 0);
+        var menu_item_font = try Font.new_neuton(allocator, opengl, 100.0, 0);
 
         var gl_quad = try GLQuad.new(allocator, opengl);
         var renderer = Renderer{
             .opengl = opengl,
-            .font = font,
+            .title_font = title_font,
+            .menu_item_font = menu_item_font,
             .gl_quad = gl_quad,
             .quad_shader = Shader.new(prog_id, 1),
             .viewport = [_]c_int{ 0, 0, 0, 0 },
@@ -208,7 +211,8 @@ pub const Renderer = struct {
     }
 
     pub fn deinit(self: *Renderer) void {
-        self.font.deinit();
+        self.title_font.deinit();
+        self.menu_item_font.deinit();
     }
 
     pub fn set_viewport(self: *Renderer, viewport: [4]c_int) void {
