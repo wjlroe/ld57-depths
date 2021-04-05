@@ -213,6 +213,7 @@ pub const Renderer = struct {
     pub fn deinit(self: *Renderer) void {
         self.title_font.deinit();
         self.menu_item_font.deinit();
+        self.render_groups.deinit();
     }
 
     pub fn set_viewport(self: *Renderer, viewport: [4]c_int) void {

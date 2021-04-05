@@ -71,8 +71,13 @@ fn mouse_button_clicked(window: ?*GLFWwindow, button: c_int, action: c_int, mods
 }
 
 pub fn main() anyerror!void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    // safety = true ; <- print out if there were memory leaks
+    // Not useful since it doesn't print what memory was leaked!
+    var gpa = std.heap.GeneralPurposeAllocator(.{ .safety = false }){};
     var allocator = &gpa.allocator;
+    defer {
+        _ = gpa.deinit();
+    }
 
     if (glfwInit() == 0) {
         console.debug("GLFW didn't init!\n", .{});
@@ -114,6 +119,7 @@ pub fn main() anyerror!void {
     }
 
     game = try Game.new(allocator, &renderer);
+    defer game.deinit();
     glfwSwapInterval(1);
 
     const renderer_info = open_gl.glGetString(GL_RENDERER);
@@ -155,7 +161,6 @@ pub fn main() anyerror!void {
         // }
     }
 
-    console.debug("Closing game\n", .{});
-
     glfwTerminate();
+    console.debug("Closing game\n", .{});
 }

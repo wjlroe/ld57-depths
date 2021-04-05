@@ -49,6 +49,11 @@ pub const Game = struct {
         return game;
     }
 
+    pub fn deinit(self: *Game) void {
+        const allocator = self.allocator;
+        allocator.destroy(self);
+    }
+
     fn update_layout(self: *Game) !void {
         var bounding_boxes = &[_]*Rect{
             &self.text_labels[0].bounding_box,
