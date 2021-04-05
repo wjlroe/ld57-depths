@@ -24,16 +24,19 @@ const GameState = union(GameStateTag) {
 };
 
 pub const Game = struct {
-    running: bool = true,
-    debug_render: bool = false,
+    running: bool,
+    debug_render: bool,
     renderer: *Renderer,
     allocator: *std.mem.Allocator,
     text_labels: [3]TextLabel,
-    mouse_position: Vec2(f32) = Vec2(f32).new_point(0.0, 0.0),
+    mouse_position: Vec2(f32),
     game_state: GameState,
 
     pub fn new(allocator: *std.mem.Allocator, renderer: *Renderer) !*Game {
         var game = try allocator.create(Game);
+        game.running = true;
+        game.debug_render = false;
+        game.mouse_position = Vec2(f32).new_point(0.0, 0.0);
         game.renderer = renderer;
         game.allocator = allocator;
         game.text_labels = [_]TextLabel{
