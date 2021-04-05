@@ -30,7 +30,7 @@ pub const Game = struct {
     allocator: *std.mem.Allocator,
     text_labels: [3]TextLabel,
     mouse_position: Vec2(f32) = Vec2(f32).new_point(0.0, 0.0),
-    game_state: GameState = GameState.GameStateTag.Menu,
+    game_state: GameState,
 
     pub fn new(allocator: *std.mem.Allocator, renderer: *Renderer) !*Game {
         var game = try allocator.create(Game);
@@ -41,6 +41,7 @@ pub const Game = struct {
             try TextLabel.new(START_GAME, &renderer.menu_item_font, renderer, allocator),
             try TextLabel.new(QUIT_GAME, &renderer.menu_item_font, renderer, allocator),
         };
+        game.game_state = GameState.Menu;
         try game.update_layout();
         return game;
     }
@@ -62,6 +63,17 @@ pub const Game = struct {
     pub fn update_mouse_position(self: *Game, xpos: f64, ypos: f64) void {
         self.mouse_position.xy.x = @floatCast(f32, xpos);
         self.mouse_position.xy.y = @floatCast(f32, ypos);
+    }
+
+    fn mouse_click(self: *Game) void {
+        switch (self.game_state) {
+            GameStateTag.Menu => {
+                if (self.text_labels[2].bounding_box.overlaps_point(self.mouse_position)) {
+                    self.running = false;
+                }
+            },
+            else => {},
+        }
     }
 
     pub fn prepare_render(self: *Game, dt: f64) void {
@@ -89,6 +101,9 @@ pub const Game = struct {
             },
             command.CommandTag.ToggleDebug => {
                 self.debug_render = !self.debug_render;
+            },
+            command.CommandTag.LeftClick => {
+                self.mouse_click();
             },
         }
     }

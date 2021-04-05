@@ -3,8 +3,10 @@ const console = @import("console.zig");
 const maths = @import("maths.zig");
 const Matrix4 = maths.Matrix4;
 const Vec4 = maths.Vec4;
+const Vec2 = maths.Vec2;
 
 pub const Rect = packed struct {
+    // TODO: use Vec2 here
     center: [2]f32,
     bounds: [2]f32,
 
@@ -55,6 +57,16 @@ pub const Rect = packed struct {
             self.center[0] - (self.bounds[0] / 2.0),
             self.center[1] - (self.bounds[1] / 2.0),
         };
+    }
+
+    pub fn overlaps_point(self: Rect, point: Vec2(f32)) bool {
+        const left_x = self.center[0] - (self.bounds[0] / 2.0);
+        const right_x = self.center[0] + (self.bounds[0] / 2.0);
+        const top_y = self.center[1] - (self.bounds[1] / 2.0);
+        const bottom_y = self.center[1] + (self.bounds[1] / 2.0);
+        std.debug.assert(left_x < right_x);
+        std.debug.assert(top_y < bottom_y);
+        return ((point.xy.x > left_x) and (point.xy.x < right_x) and (point.xy.y > top_y) and (point.xy.y < bottom_y));
     }
 };
 

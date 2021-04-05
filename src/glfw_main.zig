@@ -37,9 +37,17 @@ fn key_to_cmd(key: c_int, action: c_int, mods: c_int) ?command.Command {
     return null;
 }
 
+fn mouse_to_cmd(button: c_int, action: c_int, mods: c_int) ?command.Command {
+    if ((button == GLFW_MOUSE_BUTTON_LEFT) and (action == GLFW_PRESS) and ((mods == 0))) {
+        return command.Command.LeftClick;
+    }
+
+    return null;
+}
+
 // fn character_typed(window: ?*GLFWwindow, char: c_uint) callconv(.C) void {
 //     const cmd = command.Command{ .TypeCharacter = @intCast(u8, char) };
-//     editor.process_command(cmd) catch unreachable;
+//     game.process_command(cmd) catch unreachable;
 // }
 
 fn key_typed(window: ?*GLFWwindow, key: c_int, scancode: c_int, action: c_int, mods: c_int) callconv(.C) void {
@@ -52,6 +60,14 @@ fn key_typed(window: ?*GLFWwindow, key: c_int, scancode: c_int, action: c_int, m
 
 fn cursor_position_changed(window: ?*GLFWwindow, xpos: f64, ypos: f64) callconv(.C) void {
     game.update_mouse_position(xpos, ypos);
+}
+
+fn mouse_button_clicked(window: ?*GLFWwindow, button: c_int, action: c_int, mods: c_int) callconv(.C) void {
+    const cmd = mouse_to_cmd(button, action, mods);
+
+    if (cmd) |cmd_to_run| {
+        game.process_command(cmd_to_run);
+    }
 }
 
 pub fn main() anyerror!void {
@@ -80,6 +96,7 @@ pub fn main() anyerror!void {
     // _ = glfwSetCharCallback(window, character_typed);
     _ = glfwSetKeyCallback(window, key_typed);
     _ = glfwSetCursorPosCallback(window, cursor_position_changed);
+    _ = glfwSetMouseButtonCallback(window, mouse_button_clicked);
 
     glfwMakeContextCurrent(window);
 
