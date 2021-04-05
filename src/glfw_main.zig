@@ -42,6 +42,14 @@ fn key_to_cmd(key: c_int, action: c_int, mods: c_int) ?command.Command {
         return command.Command.Up;
     }
 
+    if ((key == GLFW_KEY_DOWN) and (action == GLFW_PRESS) and (mods == 0)) {
+        return command.Command.Down;
+    }
+
+    if ((key == GLFW_KEY_UP) and (action == GLFW_PRESS) and (mods == 0)) {
+        return command.Command.Up;
+    }
+
     if ((key == GLFW_KEY_ENTER) and (action == GLFW_PRESS) and (mods == 0)) {
         return command.Command.Enter;
     }
