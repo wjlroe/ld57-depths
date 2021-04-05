@@ -29,6 +29,7 @@ pub const Game = struct {
     renderer: *Renderer,
     allocator: *std.mem.Allocator,
     text_labels: [3]TextLabel,
+    selected_menu_item_idx: usize,
     mouse_position: Vec2(f32),
     game_state: GameState,
 
@@ -40,10 +41,11 @@ pub const Game = struct {
         game.renderer = renderer;
         game.allocator = allocator;
         game.text_labels = [_]TextLabel{
-            try TextLabel.new(GAME_TITLE, &renderer.title_font, renderer, allocator),
-            try TextLabel.new(START_GAME, &renderer.menu_item_font, renderer, allocator),
-            try TextLabel.new(QUIT_GAME, &renderer.menu_item_font, renderer, allocator),
+            try TextLabel.new(GAME_TITLE, &renderer.title_font, colours.BLUE, renderer, allocator),
+            try TextLabel.new(START_GAME, &renderer.menu_item_font, colours.BLUE, renderer, allocator),
+            try TextLabel.new(QUIT_GAME, &renderer.menu_item_font, colours.BLUE, renderer, allocator),
         };
+        game.selected_menu_item_idx = 1;
         game.game_state = GameState.Menu;
         try game.update_layout();
         return game;
@@ -63,7 +65,16 @@ pub const Game = struct {
         layout.layout_vertically(bounding_boxes, 2.0);
         layout.center_vertically(bounding_boxes, self.renderer.viewport_rect);
         layout.center_horizontally(bounding_boxes, self.renderer.viewport_rect);
-        for (self.text_labels) |*label| {
+        try self.update_text_labels();
+    }
+
+    fn update_text_labels(self: *Game) !void {
+        for (self.text_labels) |*label, idx| {
+            if (idx == self.selected_menu_item_idx) {
+                label.colour = colours.LIGHT_TEXT;
+            } else {
+                label.colour = colours.BLUE;
+            }
             try label.update_render_groups(self.allocator, self.renderer);
         }
     }
@@ -113,6 +124,39 @@ pub const Game = struct {
             command.CommandTag.LeftClick => {
                 self.mouse_click();
             },
+            command.CommandTag.Down => {
+                switch (self.game_state) {
+                    GameState.Menu => {
+                        if (self.selected_menu_item_idx < self.text_labels.len - 1) {
+                            self.selected_menu_item_idx += 1;
+                            self.update_text_labels() catch unreachable;
+                        }
+                    },
+                    else => {},
+                }
+            },
+            command.CommandTag.Up => {
+                switch (self.game_state) {
+                    GameState.Menu => {
+                        if (self.selected_menu_item_idx > 1) {
+                            self.selected_menu_item_idx -= 1;
+                            self.update_text_labels() catch unreachable;
+                        }
+                    },
+                    else => {},
+                }
+            },
+            command.CommandTag.Enter => {
+                if (self.game_state == .Menu) {
+                    if (self.selected_menu_item_idx == 2) { // Quit
+                        self.running = false;
+                    } else if (self.selected_menu_item_idx == 1) { // start game
+                        console.debug("starting game\n", .{});
+                        self.game_state = GameState.Pong;
+                    }
+                }
+            },
+            else => {},
         }
     }
 };

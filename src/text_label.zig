@@ -5,6 +5,7 @@ const render_group = @import("render_group.zig");
 const Rect = @import("rect.zig").Rect;
 const colours = @import("colours.zig");
 const maths = @import("maths.zig");
+const Vec4 = maths.Vec4;
 const console = @import("console.zig");
 const Font = @import("fonts.zig").Font;
 
@@ -14,14 +15,16 @@ pub const TextLabel = struct {
     render_groups: std.ArrayList(render_group.RenderGroup),
     bounding_box: Rect,
     font: *Font,
+    colour: Vec4(f32),
 
-    pub fn new(contents: []const u8, font: *Font, renderer: *Renderer, allocator: *std.mem.Allocator) !TextLabel {
+    pub fn new(contents: []const u8, font: *Font, colour: Vec4(f32), renderer: *Renderer, allocator: *std.mem.Allocator) !TextLabel {
         var label = TextLabel{
             .contents = contents[0..],
             .contents_ptr = undefined,
             .render_groups = std.ArrayList(render_group.RenderGroup).init(allocator),
             .bounding_box = Rect.from_bounds(0.0, 0.0),
             .font = font,
+            .colour = colour,
         };
         label.contents_ptr = @ptrToInt(label.contents.ptr);
         try label.update_render_groups(allocator, renderer);
@@ -63,7 +66,7 @@ pub const TextLabel = struct {
                 var font_render_group = render_group.RenderGroup.new_quad(allocator, &renderer.quad_shader, &renderer.gl_quad, "charInFont");
                 font_render_group.depth_testing = false;
                 font_render_group.set_float("u_Z", 0.8);
-                font_render_group.set_vec4("color", colours.BLUE);
+                font_render_group.set_vec4("color", self.colour);
                 font_render_group.set_int("sample_texture", 1);
                 font_render_group.set_mat4("tex_transform", maths.Matrix4.identity());
                 font_render_group.set_texture("texture1", .{ .slot = 0, .texture_id = self.font.texture_id });
