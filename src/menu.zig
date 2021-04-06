@@ -17,6 +17,9 @@ fn prepare_menu_label(label: *TextLabel, renderer: *Renderer) void {
         for (renderer.outline_as_render_group("textLabelOutline", label.bounding_box, colours.BLUE, 0.8, 1.0)) |group| {
             renderer.push_render_group(group);
         }
+        for (label.debug_render_groups.items) |render_group| {
+            renderer.push_render_group(render_group);
+        }
     }
     for (label.render_groups.items) |render_group| {
         renderer.push_render_group(render_group);

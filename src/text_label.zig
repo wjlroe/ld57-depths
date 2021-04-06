@@ -1,7 +1,7 @@
 const std = @import("std");
 const c = @import("c.zig");
 const Renderer = @import("opengl_renderer.zig").Renderer;
-const render_group = @import("render_group.zig");
+const RenderGroup = @import("render_group.zig").RenderGroup;
 const Rect = @import("rect.zig").Rect;
 const colours = @import("colours.zig");
 const maths = @import("maths.zig");
@@ -12,7 +12,8 @@ const Font = @import("fonts.zig").Font;
 pub const TextLabel = struct {
     contents_ptr: usize,
     contents: []const u8,
-    render_groups: std.ArrayList(render_group.RenderGroup),
+    render_groups: std.ArrayList(RenderGroup),
+    debug_render_groups: std.ArrayList(RenderGroup),
     bounding_box: Rect,
     font: *Font,
     colour: colours.Colour,
@@ -21,8 +22,9 @@ pub const TextLabel = struct {
         var label = TextLabel{
             .contents = contents[0..],
             .contents_ptr = undefined,
-            .render_groups = std.ArrayList(render_group.RenderGroup).init(allocator),
-            .bounding_box = Rect.from_bounds(0.0, 0.0),
+            .render_groups = std.ArrayList(RenderGroup).init(allocator),
+            .debug_render_groups = std.ArrayList(RenderGroup).init(allocator),
+            .bounding_box = Rect{},
             .font = font,
             .colour = colour,
         };
@@ -33,11 +35,15 @@ pub const TextLabel = struct {
 
     pub fn update_render_groups(self: *TextLabel, allocator: *std.mem.Allocator, renderer: *Renderer) !void {
         _ = self.render_groups.toOwnedSlice(); // clear down the existing items
+        _ = self.debug_render_groups.toOwnedSlice();
 
         // The position of the bounding box can be changed to move this label around
         const xy = self.bounding_box.top_left();
         var x: f32 = xy[0];
         var y: f32 = xy[1];
+        for (renderer.crosshair_as_render_group("topLeftLabel", x, y, 50.0, colours.YELLOW, 0.7)) |render_group| {
+            try self.debug_render_groups.append(render_group);
+        }
         var x0: c_int = undefined;
         var y0: c_int = undefined;
         var x1: c_int = undefined;
@@ -63,7 +69,7 @@ pub const TextLabel = struct {
             c.stbtt_GetGlyphBitmapBox(&self.font.info, glyph_idx, scale, scale, &x0, &y0, &x1, &y1);
             const maybe_packed_char = self.font.packed_char(@intCast(usize, character));
             if (maybe_packed_char) |packed_char| {
-                var font_render_group = render_group.RenderGroup.new_quad(allocator, &renderer.quad_shader, &renderer.gl_quad, "charInFont");
+                var font_render_group = RenderGroup.new_quad(allocator, &renderer.quad_shader, &renderer.gl_quad, "charInFont");
                 font_render_group.depth_testing = false;
                 font_render_group.set_float("u_Z", 0.8);
                 font_render_group.set_vec4("color", self.colour);

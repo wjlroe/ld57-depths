@@ -7,8 +7,8 @@ const Vec2 = maths.Vec2;
 
 pub const Rect = packed struct {
     // TODO: use Vec2 here
-    center: [2]f32,
-    bounds: [2]f32,
+    center: [2]f32 = [_]f32{ 0.0, 0.0 },
+    bounds: [2]f32 = [_]f32{ 0.0, 0.0 },
 
     pub fn new(center: [2]f32, bounds: [2]f32) Rect {
         return Rect{ .center = center, .bounds = bounds };
@@ -52,6 +52,7 @@ pub const Rect = packed struct {
         return translation_matrix.mul(scale_matrix);
     }
 
+    // FIXME: change to return a Vec2
     pub fn top_left(self: Rect) [2]f32 {
         return [_]f32{
             self.center[0] - (self.bounds[0] / 2.0),

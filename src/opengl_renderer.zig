@@ -263,6 +263,14 @@ pub const Renderer = struct {
         return group;
     }
 
+    pub fn crosshair_as_render_group(self: *Renderer, name: [*c]const u8, x: f32, y: f32, width: f32, colour: colours.Colour, z: f32) [2]RenderGroup {
+        var hori = self.rect_as_render_group(name, Rect.new([_]f32{x, y}, [_]f32{ width, 1.0}), colour, z);
+        hori.depth_testing = false;
+        var vert = self.rect_as_render_group(name, Rect.new([_]f32{x, y}, [_]f32{ 1.0, width}), colour, z);
+        vert.depth_testing = false;
+        return [_]RenderGroup{hori, vert};
+    }
+
     pub fn outline_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, colour: colours.Colour, z: f32, thickness: f32) [2]RenderGroup {
         // TODO: group both quad renders into the one "group", so they are grouped via push debug group etc.
         var smaller_rect = position;
