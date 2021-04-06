@@ -7,6 +7,7 @@ pub const CommandTag = enum {
     Left,
     Right,
     Enter,
+    StartGame,
 };
 
 pub const Command = union(CommandTag) {
@@ -18,4 +19,5 @@ pub const Command = union(CommandTag) {
     Left: void,
     Right: void,
     Enter: void,
+    StartGame: void,
 };

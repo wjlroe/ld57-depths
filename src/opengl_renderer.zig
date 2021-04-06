@@ -151,6 +151,7 @@ pub const Renderer = struct {
     viewport: [4]c_int,
     viewport_rect: Rect,
     first_frame: bool,
+    debug_render: bool,
     render_groups: std.ArrayList(RenderGroup),
     allocator: *std.mem.Allocator,
 
@@ -203,6 +204,7 @@ pub const Renderer = struct {
             .viewport = [_]c_int{ 0, 0, 0, 0 },
             .viewport_rect = undefined,
             .first_frame = true,
+            .debug_render = false,
             .render_groups = std.ArrayList(RenderGroup).init(allocator),
             .allocator = allocator,
         };
@@ -249,19 +251,19 @@ pub const Renderer = struct {
         }
     }
 
-    pub fn horizontal_line_as_render_group(self: *Renderer, name: [*c]const u8, y: f32, colour: Vec4(f32), z: f32) RenderGroup {
+    pub fn horizontal_line_as_render_group(self: *Renderer, name: [*c]const u8, y: f32, colour: colours.Colour, z: f32) RenderGroup {
         const pos = Rect.new([_]f32{ self.viewport_rect.center[0], y }, [_]f32{ self.viewport_rect.bounds[0], 1 });
         var group = self.rect_as_render_group(name, pos, colour, z);
         return group;
     }
 
-    pub fn vertical_line_as_render_group(self: *Renderer, name: [*c]const u8, x: f32, colour: Vec4(f32), z: f32) RenderGroup {
+    pub fn vertical_line_as_render_group(self: *Renderer, name: [*c]const u8, x: f32, colour: colours.Colour, z: f32) RenderGroup {
         const pos = Rect.new([_]f32{ x, self.viewport_rect.center[1] }, [_]f32{ 1, self.viewport_rect.bounds[1] });
         var group = self.rect_as_render_group(name, pos, colour, z);
         return group;
     }
 
-    pub fn outline_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, colour: Vec4(f32), z: f32, thickness: f32) [2]RenderGroup {
+    pub fn outline_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, colour: colours.Colour, z: f32, thickness: f32) [2]RenderGroup {
         // TODO: group both quad renders into the one "group", so they are grouped via push debug group etc.
         var smaller_rect = position;
         smaller_rect.bounds[0] -= thickness * 2.0;
@@ -272,7 +274,7 @@ pub const Renderer = struct {
         };
     }
 
-    pub fn rect_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, colour: Vec4(f32), z: f32) RenderGroup {
+    pub fn rect_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, colour: colours.Colour, z: f32) RenderGroup {
         var group = RenderGroup.new_quad(self.allocator, &self.quad_shader, &self.gl_quad, name);
         var transform_matrix: Matrix4 = position.transform_within(self.viewport_rect);
         group.set_vec4("color", colour);

@@ -15,9 +15,9 @@ pub const TextLabel = struct {
     render_groups: std.ArrayList(render_group.RenderGroup),
     bounding_box: Rect,
     font: *Font,
-    colour: Vec4(f32),
+    colour: colours.Colour,
 
-    pub fn new(contents: []const u8, font: *Font, colour: Vec4(f32), renderer: *Renderer, allocator: *std.mem.Allocator) !TextLabel {
+    pub fn new(contents: []const u8, font: *Font, colour: colours.Colour, renderer: *Renderer, allocator: *std.mem.Allocator) !TextLabel {
         var label = TextLabel{
             .contents = contents[0..],
             .contents_ptr = undefined,
