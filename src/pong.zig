@@ -16,7 +16,7 @@ pub const Pong = struct {
 
     pub fn new(allocator: *std.mem.Allocator, renderer: *Renderer) Pong {
         return Pong{
-            .ball_location = Vec2(f32).new_point(50.0, 50.0), // middle of the 'window'
+            .ball_location = Vec2(f32).new_point(0.5, 0.5), // middle of the 'window'
             .allocator = allocator,
             .renderer = renderer,
             .render_groups = std.ArrayList(RenderGroup).init(allocator),
@@ -30,7 +30,6 @@ pub const Pong = struct {
     }
 
     pub fn prepare_render(self: *Pong, dt: f64) void {
-        console.debug("pong rendering!\n", .{});
         var circle_rect = Rect.new([_]f32{self.ball_location.xy.x * self.renderer.viewport_rect.bounds[0], self.ball_location.xy.y * self.renderer.viewport_rect.bounds[1]}, [_]f32{100.0, 100.0});
         self.renderer.push_render_group(
             self.renderer.circle_as_render_group("circle", circle_rect, colours.BLUE, 0.99)
