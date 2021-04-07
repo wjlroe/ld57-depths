@@ -43,6 +43,10 @@ pub const MenuItem = struct {
         };
     }
 
+    pub fn deinit(self: *MenuItem) void {
+        self.label.deinit();
+    }
+
     fn prepare_render(self: *MenuItem, renderer: *Renderer) void {
         prepare_menu_label(&self.label, renderer);
     }
@@ -75,6 +79,13 @@ pub const Menu = struct {
             try menu.items.append(try MenuItem.new(allocator, item_params.text, &renderer.menu_item_font, menu.unselected_colour, item_params.activate_cmd, renderer));
         }
         return menu;
+    }
+
+    pub fn deinit(self: *Menu) void {
+        for (self.items.items) |*menu_item| {
+            menu_item.deinit();
+        }
+        self.items.deinit();
     }
 
     pub fn update_layout(self: *Menu) !void {

@@ -33,6 +33,11 @@ pub const TextLabel = struct {
         return label;
     }
 
+    pub fn deinit(self: *TextLabel) void {
+        self.render_groups.deinit();
+        self.debug_render_groups.deinit();
+    }
+
     pub fn update_render_groups(self: *TextLabel, allocator: *std.mem.Allocator, renderer: *Renderer) !void {
         _ = self.render_groups.toOwnedSlice(); // clear down the existing items
         _ = self.debug_render_groups.toOwnedSlice();

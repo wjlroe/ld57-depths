@@ -8,8 +8,10 @@ const Rect = @import("rect.zig").Rect;
 const layout = @import("layout.zig");
 const maths = @import("maths.zig");
 const Vec2 = maths.Vec2;
-const menu = @import("menu.zig");
-const Menu = menu.Menu;
+const menu_module = @import("menu.zig");
+const ItemParams = menu_module.ItemParams;
+const Menu = menu_module.Menu;
+const Pong = @import("pong.zig").Pong;
 
 const GAME_TITLE: []const u8 = "Pong";
 const START_GAME: []const u8 = "Start Game";
@@ -17,12 +19,12 @@ const QUIT_GAME: []const u8 = "Quit";
 
 const GameModeTag = enum {
     InMenu,
-    Pong,
+    InGame,
 };
 
 const GameMode = union(GameModeTag) {
     InMenu: Menu,
-    Pong: void,
+    InGame: Pong,
 };
 
 pub const Game = struct {
@@ -49,8 +51,27 @@ pub const Game = struct {
     }
 
     fn goto_menu(self: *Game) void {
-        const game_menu = Menu.new(self.allocator, GAME_TITLE, &[_]menu.ItemParams{ .{ .text = START_GAME, .activate_cmd = command.Command.StartGame }, .{ .text = QUIT_GAME, .activate_cmd = command.Command.Quit } }, colours.LIGHT_TEXT, colours.BLUE, self.renderer) catch unreachable;
+        // FIXME: This doesn't make sense, the menu shouldn't overwrite the game!
+        // switch (self.game_mode) {
+        //     GameMode.InGame => |*pong| {
+        //         pong.deinit();
+        //     },
+        //     else => {},
+        // }
+        const game_menu = Menu.new(self.allocator, GAME_TITLE, &[_]ItemParams{ .{ .text = START_GAME, .activate_cmd = command.Command.StartGame }, .{ .text = QUIT_GAME, .activate_cmd = command.Command.Quit } }, colours.LIGHT_TEXT, colours.BLUE, self.renderer) catch unreachable;
         self.game_mode = GameMode{ .InMenu = game_menu };
+    }
+
+    fn goto_pong(self: *Game) void {
+        // FIXME: Why is the game cleaning up the menu?!
+        switch (self.game_mode) {
+            GameMode.InMenu => |*menu| {
+                menu.deinit();
+            },
+            else => {},
+        }
+        const pong = Pong.new(self.allocator, self.renderer);
+        self.game_mode = GameMode{ .InGame = pong };
     }
 
     fn update_layout(self: *Game) !void {
@@ -99,7 +120,7 @@ pub const Game = struct {
                 self.mouse_click();
             },
             command.Command.StartGame => {
-                console.debug("START GAME\n", .{});
+                self.goto_pong();
             },
             else => {
                 switch (self.game_mode) {
