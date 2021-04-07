@@ -104,7 +104,9 @@ pub const Game = struct {
             GameMode.InMenu => |*game_menu| {
                 game_menu.prepare_render(dt);
             },
-            else => {},
+            GameMode.InGame => |*pong| {
+                pong.prepare_render(dt);
+            },
         }
     }
 

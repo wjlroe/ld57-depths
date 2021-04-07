@@ -39,7 +39,7 @@ pub fn Vec4(comptime T: type) type {
         array: [4]T,
 
         pub fn new_point(x: T, y: T, z: T, w: T) Self {
-            return Vec4{
+            return Self{
                 .xyzw = .{
                     .x = x,
                     .y = y,
@@ -49,8 +49,19 @@ pub fn Vec4(comptime T: type) type {
             };
         }
 
+        pub fn new_xy(x: T, y: T) Self {
+            return Self{
+                .xyzw = .{
+                    .x = x,
+                    .y = y,
+                    .z = 0.0,
+                    .w = 1.0,
+                },
+            };
+        }
+
         pub fn new_colour(r: T, g: T, b: T, a: T) Self {
-            return Vec4{ .rgba = .{ .r = r, .g = g, .b = b, .a = a } };
+            return Self{ .rgba = .{ .r = r, .g = g, .b = b, .a = a } };
         }
 
         pub fn print_to_string(self: Self, allocator: *std.mem.Allocator) ![]const u8 {
@@ -67,8 +78,8 @@ pub fn Vec4(comptime T: type) type {
 }
 
 test "vec4 union" {
-    var colour = Vec4.new_colour(0.5, 0.4, 0.3, 0.2);
-    var point = Vec4.new_point(0.5, 0.4, 0.3, 0.2);
+    var colour = Vec4(f32).new_colour(0.5, 0.4, 0.3, 0.2);
+    var point = Vec4(f32).new_point(0.5, 0.4, 0.3, 0.2);
     testing.expectEqual(colour.array, point.array);
     testing.expectEqual(colour.xyzw, point.xyzw);
     testing.expectEqual(colour.rgba, point.rgba);
@@ -172,9 +183,9 @@ test "matrix4 identity" {
     }
 }
 
-pub fn mat4_times_vec4(matrix: Matrix4, vector: Vec4) Vec4 {
+pub fn mat4_times_vec4(matrix: Matrix4, vector: Vec4(f32)) Vec4(f32) {
     const vec = vector.xyzw;
-    return Vec4.new_point(
+    return Vec4(f32).new_point(
         matrix.columns[0][0] * vec.x + matrix.columns[1][0] * vec.y + matrix.columns[2][0] * vec.z + matrix.columns[3][0] * vec.w,
         matrix.columns[0][1] * vec.x + matrix.columns[1][1] * vec.y + matrix.columns[2][1] * vec.z + matrix.columns[3][1] * vec.w,
         matrix.columns[0][2] * vec.x + matrix.columns[1][2] * vec.y + matrix.columns[2][2] * vec.z + matrix.columns[3][2] * vec.w,
@@ -184,23 +195,74 @@ pub fn mat4_times_vec4(matrix: Matrix4, vector: Vec4) Vec4 {
 
 test "matrix4 times vec4" {
     const identity = Matrix4.identity();
-    const input = Vec4.new_point(0.4, 0.2, 0.8, 0.5);
+    const input = Vec4(f32).new_point(0.4, 0.2, 0.8, 0.5);
     testing.expectEqual(input.array, mat4_times_vec4(identity, input).array);
 
     const zero = Matrix4.zero();
-    testing.expectEqual(Vec4.new_point(0.0, 0.0, 0.0, 0.0).xyzw, mat4_times_vec4(zero, input).xyzw);
+    testing.expectEqual(Vec4(f32).new_point(0.0, 0.0, 0.0, 0.0).xyzw, mat4_times_vec4(zero, input).xyzw);
 }
 
 test "scaling" {
     const scale = Matrix4.scale(0.5, 0.5, 1.0);
-    const input = Vec4.new_point(1.0, 1.0, 1.0, 1.0);
-    const expected = Vec4.new_point(0.5, 0.5, 1.0, 1.0);
+    const input = Vec4(f32).new_point(1.0, 1.0, 1.0, 1.0);
+    const expected = Vec4(f32).new_point(0.5, 0.5, 1.0, 1.0);
     testing.expectEqual(expected.xyzw, mat4_times_vec4(scale, input).xyzw);
 }
 
 test "translating" {
     const translation = Matrix4.translation(-0.2, 0.3, 0.4);
-    const input = Vec4.new_point(0.7, 0.1, 0.2, 1.0);
-    const expected = Vec4.new_point(0.5, 0.4, 0.6, 1.0);
+    const input = Vec4(f32).new_point(0.7, 0.1, 0.2, 1.0);
+    const expected = Vec4(f32).new_point(0.5, 0.4, 0.6, 1.0);
     testing.expectEqual(expected.xyzw, mat4_times_vec4(translation, input).xyzw);
+}
+
+fn is_vec4_equal(comptime T: type, in_vec1: Vec4(T), in_vec2: Vec4(T), name: []const u8) bool {
+    var equal = true;
+    const vec1 = in_vec1.xyzw;
+    const vec2 = in_vec2.xyzw;
+    if (vec1.x != vec2.x) {
+        equal = false;
+        // std.debug.warn("[{}] x coord different: expected: {d: >3} vs. actual: {d: >3}\n", .{name, vec1.x, vec2.x});
+    }
+    if (vec1.y != vec2.y) {
+        equal = false;
+        // std.debug.warn("[{}] y coord different: expected: {d: >3} vs. actual: {d: >3}\n", .{name, vec1.y, vec2.y});
+    }
+    if (vec1.z != vec2.z) {
+        equal = false;
+        // std.debug.warn("[{}] z coord different: expected: {d: >3} vs. actual: {d: >3}\n", .{name, vec1.z, vec2.z});
+    }
+    if (vec1.w != vec2.w) {
+        equal = false;
+        // std.debug.warn("[{}] w coord different: expected: {d: >3} vs. actual: {d: >3}\n", .{name, vec1.w, vec2.w});
+    }
+    return equal;
+}
+
+test "circle points" {
+    var all_good = true;
+    const TestData = struct {
+        in_x: f32,
+        in_y: f32,
+        expected_x: f32,
+        expected_y: f32,
+        name: []const u8,
+    };
+    const values = [_]TestData{
+        .{.in_x = 0.5, .in_y = 0.5, .expected_x = 0.0, .expected_y = 0.0, .name = "middle point"},
+        .{.in_x = 1.0, .in_y = 1.0, .expected_x = 1.0, .expected_y = 1.0, .name = "bottom right"},
+    };
+    const tex_scale = Matrix4.scale(2.0, 2.0, 1.0);
+    const tex_translation = Matrix4.translation(-1.0, -1.0, 0.0);
+    const tex_transform = tex_translation.mul(tex_scale);
+    for (values) |value_slice| {
+        const input = Vec4(f32).new_xy(value_slice.in_x, value_slice.in_y);
+        const expected = Vec4(f32).new_xy(value_slice.expected_x, value_slice.expected_y);
+        const actual = mat4_times_vec4(tex_transform, input);
+        if (!is_vec4_equal(f32, expected, actual, value_slice.name)) {
+            all_good = false;
+            std.debug.warn("\nBAD: {}. in: [{d: >3},{d: >3}], expected: [{d: >3},{d: >3}], actual: [{d: >3},{d: >3}]\n", .{value_slice.name, value_slice.in_x, value_slice.in_y, value_slice.expected_x, value_slice.expected_y, actual.xyzw.x, actual.xyzw.y});
+        }
+    }
+    testing.expect(all_good);
 }

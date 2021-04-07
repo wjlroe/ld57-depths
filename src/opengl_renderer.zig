@@ -20,8 +20,9 @@ const ShaderError = error{
     ProgramValidationFailed,
 };
 
-const vertex_shader_source = ShaderSource.init("./shaders/quad_vert.glsl");
-const fragment_shader_source = ShaderSource.init("./shaders/quad_frag.glsl");
+const quad_vertex_shader_source = ShaderSource.init("./shaders/quad_vert.glsl");
+const quad_fragment_shader_source = ShaderSource.init("./shaders/quad_frag.glsl");
+const circle_fragment_shader_source = ShaderSource.init("./shaders/circle_frag.glsl");
 
 fn parse_errors(allocator: *std.mem.Allocator, compile_error: []const u8) anyerror![]CompileError {
     const ErrorState = enum {
@@ -142,12 +143,41 @@ fn compile_shader(allocator: *std.mem.Allocator, opengl: *OpenGL, shader_type: c
     return shader_id;
 }
 
+fn compile_shaders(allocator: *std.mem.Allocator, opengl: *OpenGL, vertex_shader: *const ShaderSource, fragment_shader: *const ShaderSource) !c_uint {
+    const vert_id = try compile_shader(allocator, opengl, c.GL_VERTEX_SHADER, vertex_shader);
+    const frag_id = try compile_shader(allocator, opengl, c.GL_FRAGMENT_SHADER, fragment_shader);
+
+    const prog_id = opengl.glCreateProgram();
+    opengl.glAttachShader(prog_id, vert_id);
+    opengl.glAttachShader(prog_id, frag_id);
+    // TODO: this is very specific to the names of attribs in the quad shaders, how else can we do this?
+    opengl.glBindAttribLocation(prog_id, 0, "a_Pos");
+    opengl.glBindAttribLocation(prog_id, 1, "a_Tex");
+    opengl.glLinkProgram(prog_id);
+
+    var prog_success: c_int = undefined;
+    var infolen: usize = 0;
+    var infolog: [1024]u8 = undefined;
+    opengl.glGetProgramiv(prog_id, c.GL_LINK_STATUS, &prog_success);
+    if (prog_success != c.GL_TRUE) {
+        opengl.glGetProgramInfoLog(prog_id, 1024, @ptrCast(*c_int, &infolen), &infolog);
+        const program_error = infolog[0..infolen];
+        console.debug("Error from OpenGL:\n{}\n", .{program_error});
+        return ShaderError.LinkFailed;
+    }
+
+    opengl.glDeleteShader(vert_id);
+    opengl.glDeleteShader(frag_id);
+    return prog_id;
+}
+
 pub const Renderer = struct {
     opengl: *OpenGL,
     title_font: Font,
     menu_item_font: Font,
     gl_quad: GLQuad,
     quad_shader: Shader,
+    circle_shader: Shader,
     viewport: [4]c_int,
     viewport_rect: Rect,
     first_frame: bool,
@@ -163,29 +193,8 @@ pub const Renderer = struct {
         opengl.glEnable(c.GL_DEPTH_TEST);
         opengl.glEnable(c.GL_CULL_FACE);
 
-        const vert_id = try compile_shader(allocator, opengl, c.GL_VERTEX_SHADER, &vertex_shader_source);
-        const frag_id = try compile_shader(allocator, opengl, c.GL_FRAGMENT_SHADER, &fragment_shader_source);
-
-        const prog_id = opengl.glCreateProgram();
-        opengl.glAttachShader(prog_id, vert_id);
-        opengl.glAttachShader(prog_id, frag_id);
-        opengl.glBindAttribLocation(prog_id, 0, "a_Pos");
-        opengl.glBindAttribLocation(prog_id, 1, "a_Tex");
-        opengl.glLinkProgram(prog_id);
-
-        var prog_success: c_int = undefined;
-        var infolen: usize = 0;
-        var infolog: [1024]u8 = undefined;
-        opengl.glGetProgramiv(prog_id, c.GL_LINK_STATUS, &prog_success);
-        if (prog_success != c.GL_TRUE) {
-            opengl.glGetProgramInfoLog(prog_id, 1024, @ptrCast(*c_int, &infolen), &infolog);
-            const program_error = infolog[0..infolen];
-            console.debug("Error from OpenGL:\n{}\n", .{program_error});
-            return ShaderError.LinkFailed;
-        }
-
-        opengl.glDeleteShader(vert_id);
-        opengl.glDeleteShader(frag_id);
+        const quad_program = try compile_shaders(allocator, opengl, &quad_vertex_shader_source, &quad_fragment_shader_source);
+        const circle_program = try compile_shaders(allocator, opengl, &quad_vertex_shader_source, &circle_fragment_shader_source);
 
         // var viewport_data = [4]c_int{ 0, 0, 0, 0 };
         // opengl.glGetIntegerv(c.GL_VIEWPORT, &viewport_data[0]);
@@ -200,7 +209,8 @@ pub const Renderer = struct {
             .title_font = title_font,
             .menu_item_font = menu_item_font,
             .gl_quad = gl_quad,
-            .quad_shader = Shader.new(prog_id, 1),
+            .quad_shader = Shader.new(quad_program, 1),
+            .circle_shader = Shader.new(circle_program, 0),
             .viewport = [_]c_int{ 0, 0, 0, 0 },
             .viewport_rect = undefined,
             .first_frame = true,
@@ -290,6 +300,19 @@ pub const Renderer = struct {
         group.set_mat4("pos_transform", transform_matrix);
         group.set_mat4("tex_transform", Matrix4.identity());
         group.set_int("sample_texture", 0);
+        return group;
+    }
+
+    pub fn circle_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, colour: colours.Colour, z: f32) RenderGroup {
+        var group = RenderGroup.new_quad(self.allocator, &self.circle_shader, &self.gl_quad, name);
+        var transform_matrix: Matrix4 = position.transform_within(self.viewport_rect);
+        group.set_vec4("color", colour);
+        group.set_float("u_Z", z);
+        group.set_mat4("pos_transform", transform_matrix);
+        const tex_scale = Matrix4.scale(2.0, 2.0, 1.0);
+        const tex_translation = Matrix4.translation(-1.0, -1.0, 0.0);
+        const tex_transform = tex_translation.mul(tex_scale);
+        group.set_mat4("tex_transform", tex_transform);
         return group;
     }
 
