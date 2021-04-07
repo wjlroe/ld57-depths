@@ -41,7 +41,7 @@ pub const TextLabel = struct {
         const xy = self.bounding_box.top_left();
         var x: f32 = xy[0];
         var y: f32 = xy[1];
-        self.debug_crosshair_at(renderer, x, y, "topLeftLabel");
+        // self.debug_crosshair_at(renderer, x, y, "topLeftLabel", colours.YELLOW);
         var x0: c_int = undefined;
         var y0: c_int = undefined;
         var x1: c_int = undefined;
@@ -56,7 +56,9 @@ pub const TextLabel = struct {
         var line_gap: c_int = undefined;
         // TODO: move these into the renderer.font structure
         c.stbtt_GetFontVMetrics(&self.font.info, &ascent, &descent, &line_gap);
+        self.debug_crosshair_at(renderer, x - 10.0, y + scale * @intToFloat(f32, ascent), "ascent", colours.PURPLE);
         const line_height = scale * (@intToFloat(f32, ascent) - @intToFloat(f32, descent) + @intToFloat(f32, line_gap));
+        self.debug_crosshair_at(renderer, x, y + line_height, "yPlusLineHeight", colours.ORANGE);
         const tex_dim = @intToFloat(f32, self.font.texture_dim);
 
         var line_it = (try std.unicode.Utf8View.init(self.contents)).iterator();
@@ -82,10 +84,10 @@ pub const TextLabel = struct {
                 if (character == 'P') {
                     std.debug.warn("height of P: {d: >3}, height*scale: {d: >3}\n", .{ height, height * scale });
                 }
-                const right_edge_y: f32 = y + line_height + @intToFloat(f32, y1);
+                const right_edge_y: f32 = y + scale * @intToFloat(f32, ascent) + @intToFloat(f32, y1);
                 const left_edge_y: f32 = right_edge_y - height;
-                self.debug_crosshair_at(renderer, left_edge_x, left_edge_y, "leftEdgeXY");
-                self.debug_crosshair_at(renderer, right_edge_x, right_edge_y, "rightEdgeXY");
+                // self.debug_crosshair_at(renderer, left_edge_x, left_edge_y, "leftEdgeXY", colours.YELLOW);
+                // self.debug_crosshair_at(renderer, right_edge_x, right_edge_y, "rightEdgeXY", colours.YELLOW);
                 const pos = Rect.from_top_left_bottom_right(left_edge_x, left_edge_y, right_edge_x, right_edge_y);
                 // TODO: do we really wanna position within the viewport rect?
                 var transform_matrix: maths.Matrix4 = pos.transform_within(renderer.viewport_rect);
@@ -104,8 +106,8 @@ pub const TextLabel = struct {
         console.debug("line_height: {d: >3}, height: {d: >3}, scale: {d: >3}, ascent: {d: >3}, descent: {d: >3}, line_gap: {d: >3}\n", .{ line_height, height, scale, ascent, descent, line_gap });
     }
 
-    fn debug_crosshair_at(self: *TextLabel, renderer: *Renderer, x: f32, y: f32, name: [*c]const u8) void {
-        for (renderer.crosshair_as_render_group(name, x, y, 30.0, colours.YELLOW, 0.7)) |render_group| {
+    fn debug_crosshair_at(self: *TextLabel, renderer: *Renderer, x: f32, y: f32, name: [*c]const u8, colour: colours.Colour) void {
+        for (renderer.crosshair_as_render_group(name, x, y, 30.0, colour, 0.7)) |render_group| {
             self.debug_render_groups.append(render_group) catch unreachable;
         }
     }
