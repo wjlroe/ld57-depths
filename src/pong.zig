@@ -9,6 +9,11 @@ const console = @import("console.zig");
 
 pub const Pong = struct {
     ball_location: Vec2(f32), // x,y as percent within viewport
+    ball_vector: Vec2(f32),
+    player1_paddle: f32, // percent down the window edge
+    player1_score: u32,
+    player2_paddle: f32,
+    player2_score: u32,
     render_groups: std.ArrayList(RenderGroup),
     debug_render_groups: std.ArrayList(RenderGroup),
     allocator: *std.mem.Allocator,
