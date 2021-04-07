@@ -41,7 +41,7 @@ pub const TextLabel = struct {
         const xy = self.bounding_box.top_left();
         var x: f32 = xy[0];
         var y: f32 = xy[1];
-        // self.debug_crosshair_at(renderer, x, y, "topLeftLabel", colours.YELLOW);
+        self.debug_crosshair_at(renderer, x - 50.0, y, "topLeftLabel", colours.RED);
         var x0: c_int = undefined;
         var y0: c_int = undefined;
         var x1: c_int = undefined;
@@ -101,7 +101,7 @@ pub const TextLabel = struct {
             }
         }
         const width = x - xy[0];
-        const height = scale * @intToFloat(f32, ascent);
+        const height = scale * (@intToFloat(f32, ascent) - @intToFloat(f32, descent) + @intToFloat(f32, line_gap));
         self.bounding_box.bounds = [_]f32{ width, height };
         console.debug("line_height: {d: >3}, height: {d: >3}, scale: {d: >3}, ascent: {d: >3}, descent: {d: >3}, line_gap: {d: >3}\n", .{ line_height, height, scale, ascent, descent, line_gap });
     }
