@@ -6,16 +6,29 @@ out vec4 Target0;
 
 uniform int sample_texture;
 uniform sampler2D texture1;
+uniform float gap_height; // dashed lines
+uniform vec2 viewport_center;
 
 uniform vec4 color;
 
 void main() {
+  float AlphaValue = 1.0;
+  if (gap_height > 0.0) {
+    vec2 this_point = gl_FragCoord.xy * viewport_center;
+    if ((this_point.y / gap_height) <= (gap_height / 2.0)) {
+      AlphaValue = 1.0;
+    } else {
+      AlphaValue = 0.0;
+    }
+  }
+
   if (sample_texture == 0) {
     // static colour
-    Target0 = color;
+    float final_alpha = color.a * AlphaValue;
+    Target0 = vec4(color.rgb, final_alpha);
   } else {
     vec4 texture_color = texture(texture1, TexCoords);
-    float final_alpha = color.a * texture_color.r;
+    float final_alpha = color.a * texture_color.r * AlphaValue;
     Target0 = vec4(color.rgb, final_alpha);
   }
 }

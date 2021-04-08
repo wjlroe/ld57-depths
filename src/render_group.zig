@@ -27,6 +27,7 @@ pub const RenderGroup = struct {
     render_element: RenderElement,
     depth_testing: bool = true,
     inputs_vec4: std.AutoHashMap([*c]const u8, maths.Vec4(f32)),
+    inputs_vec2: std.AutoHashMap([*c]const u8, maths.Vec2(f32)),
     inputs_mat4: std.AutoHashMap([*c]const u8, maths.Matrix4),
     inputs_int: std.AutoHashMap([*c]const u8, i32),
     inputs_float: std.AutoHashMap([*c]const u8, f32),
@@ -39,6 +40,7 @@ pub const RenderGroup = struct {
             .shader = shader,
             .render_element = RenderElement{ .Quad = quad },
             .inputs_vec4 = std.AutoHashMap([*c]const u8, maths.Vec4(f32)).init(allocator),
+            .inputs_vec2 = std.AutoHashMap([*c]const u8, maths.Vec2(f32)).init(allocator),
             .inputs_mat4 = std.AutoHashMap([*c]const u8, maths.Matrix4).init(allocator),
             .inputs_int = std.AutoHashMap([*c]const u8, i32).init(allocator),
             .inputs_float = std.AutoHashMap([*c]const u8, f32).init(allocator),
@@ -49,6 +51,7 @@ pub const RenderGroup = struct {
 
     pub fn deinit(self: *RenderGroup) void {
         self.inputs_vec4.deinit();
+        self.inputs_vec2.deinit();
         self.inputs_mat4.deinit();
         self.inputs_int.deinit();
         self.inputs_float.deinit();
@@ -61,6 +64,10 @@ pub const RenderGroup = struct {
 
     pub fn set_vec4(self: *RenderGroup, name: [*c]const u8, value: maths.Vec4(f32)) void {
         self.inputs_vec4.put(name, value) catch unreachable;
+    }
+
+    pub fn set_vec2(self: *RenderGroup, name: [*c]const u8, value: maths.Vec2(f32)) void {
+        self.inputs_vec2.put(name, value) catch unreachable;
     }
 
     pub fn set_int(self: *RenderGroup, name: [*c]const u8, value: i32) void {
@@ -89,6 +96,12 @@ pub const RenderGroup = struct {
             var it = self.inputs_vec4.iterator();
             while (it.next()) |kv| {
                 self.shader.set_vec4(renderer.opengl, kv.key, kv.value.array);
+            }
+        }
+        {
+            var it = self.inputs_vec2.iterator();
+            while (it.next()) |kv| {
+                self.shader.set_vec2(renderer.opengl, kv.key, kv.value.array);
             }
         }
         {

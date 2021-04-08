@@ -37,6 +37,7 @@ pub const OpenGL = struct {
     glUseProgram: fn (c.GLuint) void,
     glUniform1i: fn (c.GLint, c.GLint) void,
     glUniform1f: fn (c.GLint, c.GLfloat) void,
+    glUniform2fv: fn (c.GLint, c.GLsizei, [*c]c.GLfloat) void,
     glUniform4fv: fn (c.GLint, c.GLsizei, [*c]c.GLfloat) void,
     glUniformMatrix3fv: fn (c.GLint, c.GLsizei, c.GLboolean, [*c]c.GLfloat) void,
     glUniformMatrix4fv: fn (c.GLint, c.GLsizei, c.GLboolean, [*c]c.GLfloat) void,

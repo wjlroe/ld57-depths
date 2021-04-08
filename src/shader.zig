@@ -34,6 +34,14 @@ pub const Shader = struct {
         }
     }
 
+    pub fn set_vec2(self: Shader, opengl: *OpenGL, uniform_name: [*c]const u8, value: [2]f32) void {
+        const location = self.get_location(opengl, uniform_name);
+        if (location != -1) {
+            var pointer = value;
+            opengl.glUniform2fv(location, 1, &pointer);
+        }
+    }
+
     pub fn set_mat4(self: Shader, opengl: *OpenGL, uniform_name: [*c]const u8, value: Matrix4) void {
         const location = self.get_location(opengl, uniform_name);
         if (location != -1) {

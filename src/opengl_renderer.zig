@@ -297,6 +297,7 @@ pub const Renderer = struct {
         var transform_matrix: Matrix4 = position.transform_within(self.viewport_rect);
         group.set_vec4("color", colour);
         group.set_float("u_Z", z);
+        group.set_float("gap_height", 0.0);
         group.set_mat4("pos_transform", transform_matrix);
         group.set_mat4("tex_transform", Matrix4.identity());
         group.set_int("sample_texture", 0);

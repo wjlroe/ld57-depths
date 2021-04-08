@@ -13,6 +13,7 @@ pub const TRANSPARENT = Colour{ .array = [_]f32{ 0.0, 0.0, 0.0, 0.0 } };
 pub const YELLOW = colour_from_hex("#ffff00");
 pub const ORANGE = colour_from_hex("#ff7f00");
 pub const PURPLE = colour_from_hex("#800080");
+pub const WHITE = colour_from_hex("#ffffff");
 
 pub fn colour_from_hex(hex: []const u8) Colour {
     var numbers: [3]u8 = undefined;
