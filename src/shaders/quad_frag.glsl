@@ -7,14 +7,14 @@ out vec4 Target0;
 uniform int sample_texture;
 uniform sampler2D texture1;
 uniform float gap_height; // dashed lines
-uniform vec2 viewport_center;
+// uniform vec2 viewport_center;
 
 uniform vec4 color;
 
 void main() {
   float AlphaValue = 1.0;
   if (gap_height > 0.0) {
-    vec2 this_point = gl_FragCoord.xy * viewport_center;
+    vec2 this_point = gl_FragCoord.xy;
     if ((this_point.y / gap_height) <= (gap_height / 2.0)) {
       AlphaValue = 1.0;
     } else {
