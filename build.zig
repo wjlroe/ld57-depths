@@ -27,8 +27,8 @@ pub fn build(b: *Builder) void {
 
     switch (os) {
         .windows => {
-            exe.addIncludeDir("C:/GLFW/glfw-3.3.3.bin.WIN64/include");
-            exe.addLibPath("C:/GLFW/glfw-3.3.3.bin.WIN64/lib-vc2019");
+            exe.addIncludeDir("C:/GLFW/glfw-3.3.4.bin.WIN64/include");
+            exe.addLibPath("C:/GLFW/glfw-3.3.4.bin.WIN64/lib-vc2019");
             exe.linkSystemLibrary("opengl32");
             exe.linkSystemLibrary("shell32");
             exe.linkSystemLibrary("user32");
