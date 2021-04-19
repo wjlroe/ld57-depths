@@ -39,7 +39,6 @@ pub const Pong = struct {
         {
             var dashed_line = self.renderer.rect_as_render_group("boundary", Rect.new(self.renderer.viewport_rect.center, [_]f32{10.0, self.renderer.viewport_rect.bounds[1]}), colours.WHITE, z);
             dashed_line.set_float("gap_height", 100.0);
-            // dashed_line.set_vec2("viewport_center", Vec2(f32){.array=self.renderer.viewport_rect.center});
             self.renderer.push_render_group(dashed_line);
         }
         z -= 0.01;
