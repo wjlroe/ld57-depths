@@ -11,29 +11,15 @@ const Vec2 = maths.Vec2;
 const menu_module = @import("menu.zig");
 const ItemParams = menu_module.ItemParams;
 const Menu = menu_module.Menu;
-const Pong = @import("pong.zig").Pong;
 const mesh = @import("mesh.zig");
-
-const GAME_TITLE: []const u8 = "Pong";
-const START_GAME: []const u8 = "Start Game";
-const QUIT_GAME: []const u8 = "Quit";
-
-const GameModeTag = enum {
-    InMenu,
-    InGame,
-};
-
-const GameMode = union(GameModeTag) {
-    InMenu: Menu,
-    InGame: Pong,
-};
+const sprite = @import("sprite.zig");
 
 pub const Game = struct {
     running: bool,
     renderer: *Renderer,
     allocator: *std.mem.Allocator,
     mouse_position: Vec2(f32),
-    game_mode: GameMode,
+    floor_tiles_sprite: sprite.Sprite,
 
     pub fn new(allocator: *std.mem.Allocator, renderer: *Renderer) !*Game {
         mesh.load_mesh("assets/cube.obj");
@@ -42,7 +28,7 @@ pub const Game = struct {
         game.mouse_position = Vec2(f32).new_point(0.0, 0.0);
         game.renderer = renderer;
         game.allocator = allocator;
-        game.goto_menu();
+        game.floor_tiles_sprite = try sprite.Sprite.new_floor_tiles(allocator);
         try game.update_layout();
         return game;
     }
@@ -52,37 +38,7 @@ pub const Game = struct {
         allocator.destroy(self);
     }
 
-    fn goto_menu(self: *Game) void {
-        // FIXME: This doesn't make sense, the menu shouldn't overwrite the game!
-        // switch (self.game_mode) {
-        //     GameMode.InGame => |*pong| {
-        //         pong.deinit();
-        //     },
-        //     else => {},
-        // }
-        const game_menu = Menu.new(self.allocator, GAME_TITLE, &[_]ItemParams{ .{ .text = START_GAME, .activate_cmd = command.Command.StartGame }, .{ .text = QUIT_GAME, .activate_cmd = command.Command.Quit } }, colours.LIGHT_TEXT, colours.BLUE, self.renderer) catch unreachable;
-        self.game_mode = GameMode{ .InMenu = game_menu };
-    }
-
-    fn goto_pong(self: *Game) void {
-        // FIXME: Why is the game cleaning up the menu?!
-        switch (self.game_mode) {
-            GameMode.InMenu => |*menu| {
-                menu.deinit();
-            },
-            else => {},
-        }
-        const pong = Pong.new(self.allocator, self.renderer);
-        self.game_mode = GameMode{ .InGame = pong };
-    }
-
     fn update_layout(self: *Game) !void {
-        switch (self.game_mode) {
-            GameMode.InMenu => |*game_menu| {
-                try game_menu.update_layout();
-            },
-            else => {},
-        }
     }
 
     pub fn update_mouse_position(self: *Game, xpos: f64, ypos: f64) void {
@@ -91,25 +47,10 @@ pub const Game = struct {
     }
 
     fn mouse_click(self: *Game) void {
-        switch (self.game_mode) {
-            GameMode.InMenu => |*game_menu| {
-                if (game_menu.mouse_click(self.mouse_position)) |cmd| {
-                    self.process_command(cmd);
-                }
-            },
-            else => {},
-        }
     }
 
     pub fn prepare_render(self: *Game, dt: f64) void {
-        switch (self.game_mode) {
-            GameMode.InMenu => |*game_menu| {
-                game_menu.prepare_render(dt);
-            },
-            GameMode.InGame => |*pong| {
-                pong.prepare_render(dt);
-            },
-        }
+        // TODO: render a bunch of tiles in a grid!
     }
 
     pub fn process_command(self: *Game, cmd: command.Command) void {
@@ -123,19 +64,7 @@ pub const Game = struct {
             command.Command.LeftClick => {
                 self.mouse_click();
             },
-            command.Command.StartGame => {
-                self.goto_pong();
-            },
-            else => {
-                switch (self.game_mode) {
-                    GameMode.InMenu => |*game_menu| {
-                        if (game_menu.process_command(cmd)) |next_cmd| {
-                            self.process_command(next_cmd);
-                        }
-                    },
-                    else => {},
-                }
-            },
+            else => {},
         }
     }
 };
