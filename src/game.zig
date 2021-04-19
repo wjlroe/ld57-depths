@@ -12,6 +12,7 @@ const menu_module = @import("menu.zig");
 const ItemParams = menu_module.ItemParams;
 const Menu = menu_module.Menu;
 const Pong = @import("pong.zig").Pong;
+const mesh = @import("mesh.zig");
 
 const GAME_TITLE: []const u8 = "Pong";
 const START_GAME: []const u8 = "Start Game";
@@ -35,6 +36,7 @@ pub const Game = struct {
     game_mode: GameMode,
 
     pub fn new(allocator: *std.mem.Allocator, renderer: *Renderer) !*Game {
+        mesh.load_mesh("assets/cube.obj");
         var game = try allocator.create(Game);
         game.running = true;
         game.mouse_position = Vec2(f32).new_point(0.0, 0.0);

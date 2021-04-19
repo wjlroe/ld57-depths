@@ -20,6 +20,7 @@ pub fn build(b: *Builder) void {
 
     exe.addIncludeDir("include");
     exe.addCSourceFile("src/truetype.c", &[_][]const u8{"-std=c99"});
+    exe.addCSourceFile("include/fast_obj-1.1/fast_obj.c", &[_][]const u8{"-std=c99"});
 
     exe.linkLibC();
 

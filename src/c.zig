@@ -4,4 +4,5 @@ pub usingnamespace @cImport({
     @cInclude("GLFW/glfw3.h");
     @cInclude("stb/stb_truetype.h");
     @cInclude("stb/stb_image.h");
+    @cInclude("fast_obj-1.1/fast_obj.h");
 });
