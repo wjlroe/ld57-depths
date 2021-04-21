@@ -24,8 +24,6 @@ pub fn build(b: *Builder) void {
 
     exe.linkLibC();
 
-    exe.linkSystemLibrary("glfw3");
-
     switch (os) {
         .windows => {
             exe.addIncludeDir("C:/dev/GLFW/glfw-3.3.4.bin.WIN64/include");
@@ -34,6 +32,7 @@ pub fn build(b: *Builder) void {
             exe.linkSystemLibrary("shell32");
             exe.linkSystemLibrary("user32");
             exe.linkSystemLibrary("gdi32");
+            exe.linkSystemLibrary("glfw3");
             exe.subsystem = switch (mode) {
                 .Debug => .Console,
                 else => .Windows,
@@ -41,20 +40,21 @@ pub fn build(b: *Builder) void {
         },
         .macos => {
             exe.addIncludeDir("/opt/X11/include");
+            exe.addLibPath("/usr/local/lib");
             exe.addFrameworkDir("/System/Library/Frameworks");
             exe.linkFramework("OpenGL");
             exe.linkFramework("Cocoa");
-            exe.addLibPath("vendor/glfw-3.3.2/mac");
+            exe.linkSystemLibrary("glfw");
         },
         .linux => {
             exe.addIncludeDir("/usr/include");
             exe.addIncludeDir("/usr/X11/include");
-            exe.addLibPath("vendor/glfw-3.3.2/linux");
             exe.addLibPath("/usr/lib");
             exe.addLibPath("/usr/X11/lib");
             exe.addLibPath("/opt/X11/lib");
             exe.linkSystemLibrary("X11");
             exe.linkSystemLibrary("GL");
+            exe.linkSystemLibrary("glfw3");
         },
         else => {},
     }
