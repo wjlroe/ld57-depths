@@ -8,6 +8,9 @@ pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
 
     const os = target.os_tag orelse builtin.os.tag;
+    if (os == .macos) {
+        b.env_map.set("ZIG_SYSTEM_LINKER_HACK", "1") catch unreachable;
+    }
 
     var main_file: []const u8 = undefined;
     if (os == .windows) {
