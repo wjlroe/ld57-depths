@@ -65,6 +65,43 @@ fn mouse_to_cmd(button: c_int, action: c_int, mods: c_int) ?command.Command {
     return null;
 }
 
+fn glfw_error_callback(error_code: c_int, description: [*c]const u8) callconv(.C) void {
+    var error_code_value = std.ArrayList(u8).init(std.heap.c_allocator);
+    switch (error_code) {
+        GLFW_API_UNAVAILABLE => {
+            error_code_value.appendSlice("GLFW_API_UNAVAILABLE") catch unreachable;
+        },
+        GLFW_FORMAT_UNAVAILABLE => {
+            error_code_value.appendSlice("GLFW_FORMAT_UNAVAILABLE") catch unreachable;
+        },
+        GLFW_INVALID_ENUM => {
+            error_code_value.appendSlice("GLFW_INVALID_ENUM") catch unreachable;
+        },
+        GLFW_INVALID_VALUE => {
+            error_code_value.appendSlice("GLFW_INVALID_VALUE") catch unreachable;
+        },
+        GLFW_NO_CURRENT_CONTEXT => {
+            error_code_value.appendSlice("GLFW_NO_CURRENT_CONTEXT") catch unreachable;
+        },
+        GLFW_NOT_INITIALIZED => {
+            error_code_value.appendSlice("GLFW_NOT_INITIALIZED") catch unreachable;
+        },
+        GLFW_OUT_OF_MEMORY => {
+            error_code_value.appendSlice("GLFW_OUT_OF_MEMORY") catch unreachable;
+        },
+        GLFW_PLATFORM_ERROR => {
+            error_code_value.appendSlice("GLFW_PLATFORM_ERROR") catch unreachable;
+        },
+        GLFW_VERSION_UNAVAILABLE => {
+            error_code_value.appendSlice("GLFW_VERSION_UNAVAILABLE") catch unreachable;
+        },
+        else => {
+            error_code_value.appendSlice("UNKNOWN") catch unreachable;
+        },
+    }
+    std.debug.warn("GLFW error: {} ({}): {s}\n", .{ error_code, error_code_value.items, description });
+}
+
 // fn character_typed(window: ?*GLFWwindow, char: c_uint) callconv(.C) void {
 //     const cmd = command.Command{ .TypeCharacter = @intCast(u8, char) };
 //     game.process_command(cmd) catch unreachable;
@@ -98,6 +135,8 @@ pub fn main() anyerror!void {
     defer {
         _ = gpa.deinit();
     }
+
+    _ = glfwSetErrorCallback(glfw_error_callback);
 
     if (glfwInit() == 0) {
         console.debug("GLFW didn't init!\n", .{});
