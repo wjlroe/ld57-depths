@@ -21,8 +21,7 @@ pub const TextureSlot = struct {
 };
 
 pub const RenderGroup = struct {
-    name: [*c]const u8,
-    name_len: c_int,
+    name: []const u8,
     shader: *Shader,
     render_element: RenderElement,
     depth_testing: bool = true,
@@ -33,10 +32,9 @@ pub const RenderGroup = struct {
     inputs_float: std.AutoHashMap([*c]const u8, f32),
     inputs_texture: std.AutoHashMap([*c]const u8, TextureSlot),
 
-    pub fn new_quad(allocator: *std.mem.Allocator, shader: *Shader, quad: *GLQuad, name: [*c]const u8) RenderGroup {
+    pub fn new_quad(allocator: *std.mem.Allocator, shader: *Shader, quad: *GLQuad, name: []const u8) RenderGroup {
         const group = RenderGroup{
             .name = name,
-            .name_len = @intCast(c_int, std.mem.len(name)),
             .shader = shader,
             .render_element = RenderElement{ .Quad = quad },
             .inputs_vec4 = std.AutoHashMap([*c]const u8, maths.Vec4(f32)).init(allocator),
@@ -83,7 +81,7 @@ pub const RenderGroup = struct {
     }
 
     pub fn render(self: *RenderGroup, renderer: *Renderer) void {
-        renderer.opengl.glPushDebugGroup(c.GL_DEBUG_SOURCE_APPLICATION, 1, self.name_len, self.name);
+        renderer.push_debug_group(self.name);
         renderer.opengl.glUseProgram(self.shader.prog_id);
 
         if (self.depth_testing) {
@@ -134,6 +132,6 @@ pub const RenderGroup = struct {
                 gl_quad.draw(renderer.opengl, self.shader.prog_id);
             },
         }
-        renderer.opengl.glPopDebugGroup();
+        renderer.pop_debug_group();
     }
 };

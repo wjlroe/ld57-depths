@@ -2,9 +2,21 @@ const std = @import("std");
 const c = @import("c.zig");
 const console = @import("console.zig");
 
+pub const gl_versions = .{
+    [2]c_int{ 4, 3 },
+};
+
+pub const gl_structs = .{OpenGL_4_3};
+
+const OpenGL_4_3 = struct {
+    glPushDebugGroup: fn (source: c.GLenum, id: c.GLuint, length: c.GLsizei, message: [*c]const u8) callconv(.C) void,
+    glPopDebugGroup: fn () callconv(.C) void,
+};
+
 pub const OpenGL = struct {
     // Info about device
     max_texture_size: c_int,
+    gl_version: [2]c_int,
 
     // OpenGL functions
     glGetError: fn () c.GLenum,
@@ -58,11 +70,14 @@ pub const OpenGL = struct {
     glBindAttribLocation: fn (c.GLuint, c.GLuint, [*c]const u8) void,
 
     // OpenGL 4.3
-    glPushDebugGroup: fn (c.GLenum, c.GLuint, c.GLsizei, [*c]const u8) void,
-    glPopDebugGroup: fn () void,
+    gl_4_3_funcs: ?OpenGL_4_3,
 
     pub fn init(self: *OpenGL) void {
         self.glGetIntegerv(c.GL_MAX_TEXTURE_SIZE, &self.max_texture_size);
+    }
+
+    pub fn is_version_supported(self: *OpenGL, version: [2]c_int) bool {
+        return (self.gl_version[0] >= version[0]) and (self.gl_version[1] >= version[1]);
     }
 
     pub fn print_info(self: *OpenGL) void {

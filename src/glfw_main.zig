@@ -10,7 +10,7 @@ pub var game: *Game = undefined;
 
 const cmd_or_control = if (std.builtin.os.tag == .macos) GLFW_MOD_SUPER else GLFW_MOD_CONTROL;
 
-fn get_opengl_funcs(allocator: *std.mem.Allocator, open_gl: *OpenGL, comptime T: type) !void {
+fn get_opengl_funcs_internal(allocator: *std.mem.Allocator, comptime T: type, open_gl: *T) !void {
     comptime const info = @typeInfo(T);
     inline for (info.Struct.fields) |field| {
         if (@typeInfo(field.field_type) == .Fn) {
@@ -21,6 +21,21 @@ fn get_opengl_funcs(allocator: *std.mem.Allocator, open_gl: *OpenGL, comptime T:
                 console.debug("Could not getProcAddress for {}\n", .{field.name});
                 std.os.exit(1);
             }
+        }
+    }
+}
+
+fn get_opengl_funcs(allocator: *std.mem.Allocator, comptime T: type, open_gl: *OpenGL) !void {
+    try get_opengl_funcs_internal(allocator, T, open_gl);
+
+    comptime var name_buffer: [64]u8 = undefined;
+    inline for (gl_versions) |gl_version, i| {
+        if (open_gl.is_version_supported(gl_version)) {
+            comptime const gl_struct = gl_structs[i];
+            var opengl_gl_sub: gl_struct = undefined;
+            try get_opengl_funcs_internal(allocator, gl_struct, &opengl_gl_sub);
+            comptime const version_func_name = try std.fmt.bufPrint(name_buffer[0..], "gl_{}_{}_funcs", .{ gl_version[0], gl_version[1] });
+            @field(open_gl, version_func_name) = opengl_gl_sub;
         }
     }
 }
@@ -127,6 +142,28 @@ fn mouse_button_clicked(window: ?*GLFWwindow, button: c_int, action: c_int, mods
     }
 }
 
+fn create_window(open_gl: *OpenGL) ?*GLFWwindow {
+    var window: ?*GLFWwindow = undefined;
+    const try_gl_versions = [_][2]c_int{ .{ 4, 3 }, .{ 4, 1 }, .{ 3, 2 } };
+
+    for (try_gl_versions) |gl_version| {
+        glfwWindowHint(GLFW_SAMPLES, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, gl_version[0]);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_version[1]);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHintString(GLFW_X11_CLASS_NAME, "Game");
+
+        window = glfwCreateWindow(1920, 1080, "base_code", null, null);
+        if (@ptrToInt(window) != 0) {
+            console.debug("OpenGL version available: {}.{}\n", .{ gl_version[0], gl_version[1] });
+            open_gl.gl_version = gl_version;
+            break;
+        }
+    }
+    return window;
+}
+
 pub fn main() anyerror!void {
     // safety = true ; <- print out if there were memory leaks
     // Not useful since it doesn't print what memory was leaked!
@@ -143,13 +180,8 @@ pub fn main() anyerror!void {
         std.os.exit(1);
     }
 
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    var window = glfwCreateWindow(1920, 1080, "base_code", null, null);
+    var open_gl: OpenGL = undefined;
+    var window = create_window(&open_gl);
     if (@ptrToInt(window) == 0) {
         console.debug("ERROR: could not open a window\n", .{});
         glfwTerminate();
@@ -164,8 +196,7 @@ pub fn main() anyerror!void {
 
     glfwMakeContextCurrent(window);
 
-    var open_gl: OpenGL = undefined;
-    try get_opengl_funcs(allocator, &open_gl, OpenGL);
+    try get_opengl_funcs(allocator, OpenGL, &open_gl);
     open_gl.init();
     open_gl.print_info();
     var renderer = try opengl_renderer.Renderer.init(allocator, &open_gl);

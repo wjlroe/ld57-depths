@@ -318,11 +318,15 @@ pub const Renderer = struct {
     }
 
     pub fn push_debug_group(self: *Renderer, message: []const u8) void {
-        self.opengl.glPushDebugGroup(c.GL_DEBUG_SOURCE_APPLICATION, 1, @intCast(c_int, message.len), message.ptr);
+        if (self.opengl.gl_4_3_funcs) |gl_43| {
+            gl_43.glPushDebugGroup(c.GL_DEBUG_SOURCE_APPLICATION, 1, @intCast(c_int, message.len), message.ptr);
+        }
     }
 
     pub fn pop_debug_group(self: *Renderer) void {
-        self.opengl.glPopDebugGroup();
+        if (self.opengl.gl_4_3_funcs) |gl_43| {
+            gl_43.glPopDebugGroup();
+        }
     }
 
     pub fn debug_on_first_frame(self: *Renderer, comptime fmt: []const u8, args: anytype) void {
