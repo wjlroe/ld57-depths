@@ -358,7 +358,6 @@ pub const Renderer = struct {
         var group = RenderGroup.new_quad(self.allocator, &self.quad_shader, &self.gl_quad, name);
         var transform_matrix: Matrix4 = position.transform_within(self.viewport_rect);
         group.set_float("u_Z", z);
-        group.set_vec4("color", colours.BLACK);
         group.set_float("gap_height", 0.0);
         group.set_mat4("pos_transform", transform_matrix);
         group.set_mat4("tex_transform", tex_transform);
