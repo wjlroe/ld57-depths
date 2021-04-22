@@ -55,10 +55,44 @@ pub const Game = struct {
     }
 
     pub fn prepare_render(self: *Game, dt: f64) void {
-        // TODO: render a bunch of tiles in a grid!
-        const tile_pos = Rect.from_top_left_bottom_right(100.0, 100.0, 164.0, 164.0);
-        const z = 0.5;
-        self.renderer.push_render_group(self.floor_tiles_sprite.as_render_group("floor_tile", self.renderer, tile_pos, z));
+        // Tiles
+        const tile_size = self.floor_tiles_sprite.frame_width * 2;
+        {
+            const tile_pos = Rect.from_top_left_bottom_right(100.0, 100.0, 100.0 + @intToFloat(f32, tile_size), 100.0 + @intToFloat(f32, tile_size));
+            const z = 0.5;
+            self.renderer.push_render_group(self.floor_tiles_sprite.as_render_group("floor_tile", self.renderer, tile_pos, z));
+        }
+
+        if (self.renderer.debug_render) {
+            // grid stuff
+            const window_width = @floatToInt(i32, self.renderer.viewport_rect.bounds[0]);
+            const window_height = @floatToInt(i32, self.renderer.viewport_rect.bounds[1]);
+            const tiles_wide = @divFloor(window_width, tile_size);
+            const x_offset = @intToFloat(f32, @mod(window_width, tile_size)) / 2.0;
+            const tiles_high = @divFloor(window_height, tile_size);
+            const y_offset = @intToFloat(f32, @mod(window_height, tile_size)) / 2.0;
+            const thickness = 1.0;
+            const z = 0.2;
+            const colour = colours.ORANGE;
+            var tile_x: i32 = 0;
+            var tile_y: i32 = 0;
+            var x = x_offset;
+            var y = y_offset;
+            while (tile_y < tiles_high) {
+                while (tile_x < tiles_wide) {
+                    const position = Rect.from_top_left_bottom_right(x, y, x + @intToFloat(f32, tile_size), y + @intToFloat(f32, tile_size));
+                    for (self.renderer.outline_as_render_group("grid", position, colour, z, thickness)) |render_group| {
+                        self.renderer.push_render_group(render_group);
+                    }
+                    tile_x += 1;
+                    x += @intToFloat(f32, tile_size);
+                }
+                tile_y += 1;
+                tile_x = 0;
+                x = x_offset;
+                y += @intToFloat(f32, tile_size);
+            }
+        }
     }
 
     pub fn process_command(self: *Game, cmd: command.Command) void {

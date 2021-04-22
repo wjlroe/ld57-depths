@@ -34,11 +34,11 @@ fn compare_frames(context: void, a: Frame, b: Frame) bool {
 pub const Sprite = struct {
     frames: []Frame,
     current_frame: usize,
-    frame_time: f64,
-    width: i64,
-    height: i64,
-    frame_width: i64,
-    frame_height: i64,
+    frame_time: f32,
+    width: i32,
+    height: i32,
+    frame_width: i32,
+    frame_height: i32,
     rect: Rect,
     resource: Resource,
 
@@ -70,10 +70,10 @@ pub const Sprite = struct {
         var size_obj = meta_obj.get("size").?.Object;
         const sheet_width = size_obj.get("w").?.Integer;
         const sheet_height = size_obj.get("h").?.Integer;
-        sprite.frame_width = frame_width;
-        sprite.frame_height = frame_height;
-        sprite.width = sheet_width;
-        sprite.height = sheet_height;
+        sprite.frame_width = @intCast(i32, frame_width);
+        sprite.frame_height = @intCast(i32, frame_height);
+        sprite.width = @intCast(i32, sheet_width);
+        sprite.height = @intCast(i32, sheet_height);
         sprite.rect = Rect.from_bounds(@intToFloat(f32, sheet_width), @intToFloat(f32, sheet_height));
         sprite.frames = frames.toOwnedSlice();
         sprite.current_frame = 0;
