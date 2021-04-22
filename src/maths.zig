@@ -109,6 +109,27 @@ pub const Matrix4 = packed struct {
         return matrix;
     }
 
+    pub fn from_rows(n00: f32, n10: f32, n20: f32, n30: f32, n01: f32, n11: f32, n21: f32, n31: f32, n02: f32, n12: f32, n22: f32, n32: f32, n03: f32, n13: f32, n23: f32, n33: f32) Matrix4 {
+        var matrix: Matrix4 = undefined;
+        matrix.columns[0][0] = n00;
+        matrix.columns[0][1] = n01;
+        matrix.columns[0][2] = n02;
+        matrix.columns[0][3] = n03;
+        matrix.columns[1][0] = n10;
+        matrix.columns[1][1] = n11;
+        matrix.columns[1][2] = n12;
+        matrix.columns[1][3] = n13;
+        matrix.columns[2][0] = n20;
+        matrix.columns[2][1] = n21;
+        matrix.columns[2][2] = n22;
+        matrix.columns[2][3] = n23;
+        matrix.columns[3][0] = n30;
+        matrix.columns[3][1] = n31;
+        matrix.columns[3][2] = n32;
+        matrix.columns[3][3] = n33;
+        return matrix;
+    }
+
     pub fn identity() Matrix4 {
         return new(1.0, 0.0, 0.0, 0.0, // col 0
             0.0, 1.0, 0.0, 0.0, // col 1

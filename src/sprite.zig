@@ -2,8 +2,12 @@ const std = @import("std");
 const console = @import("console.zig");
 const Rect = @import("rect.zig").Rect;
 const Matrix4 = @import("maths.zig").Matrix4;
+const Resource = @import("resources.zig").Resource;
+const RenderGroup = @import("render_group.zig").RenderGroup;
+const Renderer = @import("opengl_renderer.zig").Renderer;
 
 const floor_tiles_sprite_json = @embedFile("../assets/floor_tiles.json");
+// const floor_tiles_texture = @embedFile("../assets/floor_tiles.png");
 
 pub const Frame = struct {
     x: i64,
@@ -36,8 +40,9 @@ pub const Sprite = struct {
     frame_width: i64,
     frame_height: i64,
     rect: Rect,
+    resource: Resource,
 
-    pub fn new_from_json(allocator: *std.mem.Allocator, json: []const u8) !Sprite {
+    pub fn new_from_json(allocator: *std.mem.Allocator, json: []const u8, resource: Resource) !Sprite {
         var p = std.json.Parser.init(allocator, false);
         defer p.deinit();
 
@@ -71,8 +76,9 @@ pub const Sprite = struct {
         sprite.height = sheet_height;
         sprite.rect = Rect.from_bounds(@intToFloat(f32, sheet_width), @intToFloat(f32, sheet_height));
         sprite.frames = frames.toOwnedSlice();
-        sprite.current_frame = 1;
+        sprite.current_frame = 0;
         sprite.frame_time = 0.0;
+        sprite.resource = resource;
         std.sort.sort(Frame, sprite.frames, {}, compare_frames);
 
         return sprite;
@@ -84,8 +90,11 @@ pub const Sprite = struct {
     }
 
     pub fn new_floor_tiles(allocator: *std.mem.Allocator) !Sprite {
-        const sprite = try Sprite.new_from_json(allocator, floor_tiles_sprite_json);
-        return sprite;
+        if (Resource.find("floor_tiles.png")) |resource| {
+            var sprite = try Sprite.new_from_json(allocator, floor_tiles_sprite_json, resource);
+            return sprite;
+        }
+        return error.ResourceNotFound;
     }
 
     pub fn add_time(self: *Sprite, dt: f64) void {
@@ -100,7 +109,7 @@ pub const Sprite = struct {
         return &self.frames[self.current_frame];
     }
 
-    pub fn get_transform(self: *Sprite, do_flip: bool) Matrix4 {
+    fn get_transform(self: *Sprite, do_flip: bool) Matrix4 {
         const frame = self.get_current_frame();
         const flip_factor: f32 = if (do_flip) -1.0 else 1.0;
         const sx = 1.0 / @intToFloat(f32, self.frames.len);
@@ -121,5 +130,10 @@ pub const Sprite = struct {
         } else {
             return transform;
         }
+    }
+
+    pub fn as_render_group(self: *Sprite, name: [*c]const u8, renderer: *Renderer, position: Rect, z: f32) RenderGroup {
+        const tex_transform = self.get_transform(false);
+        return renderer.texture_as_render_group(name, position, z, tex_transform, self.resource.texture_id);
     }
 };

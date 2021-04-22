@@ -13,6 +13,7 @@ usingnamespace @import("maths.zig");
 const RenderGroup = @import("render_group.zig").RenderGroup;
 const RenderElement = @import("render_group.zig").RenderElement;
 const RenderElementType = @import("render_group.zig").RenderElementType;
+const resources = @import("resources.zig");
 
 const ShaderError = error{
     CompilationFailed,
@@ -228,6 +229,55 @@ pub const Renderer = struct {
         self.render_groups.deinit();
     }
 
+    pub fn bind_image(self: *Renderer, resource: resources.Resource, repeat: bool) ?c_uint {
+        var tex_name: c_uint = undefined;
+        var width: c_int = undefined;
+        var height: c_int = undefined;
+        var num_channels: c_int = undefined;
+        const data_length = @intCast(c_int, resource.length);
+        const loaded_image_data = c.stbi_load_from_memory(resource.data, data_length, &width, &height, &num_channels, 0);
+        if (loaded_image_data != 0) {
+            defer c.stbi_image_free(loaded_image_data);
+            self.opengl.glGenTextures(1, &tex_name);
+            var format: u16 = c.GL_RGB;
+            switch (num_channels) {
+                1 => {
+                    format = c.GL_RED;
+                },
+                3 => {
+                    format = c.GL_RGB;
+                },
+                4 => {
+                    format = c.GL_RGBA;
+                },
+                else => {},
+            }
+            self.opengl.glBindTexture(c.GL_TEXTURE_2D, tex_name);
+            self.opengl.glTexImage2D(c.GL_TEXTURE_2D, 0, format, width, height, 0, format, c.GL_UNSIGNED_BYTE, loaded_image_data);
+            self.opengl.glGenerateMipmap(c.GL_TEXTURE_2D);
+            const repeat_mode: c_int = if (repeat) c.GL_REPEAT else c.GL_CLAMP_TO_EDGE;
+
+            if (num_channels == 4) {
+                self.opengl.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, repeat_mode);
+                self.opengl.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, repeat_mode);
+            } else {
+                self.opengl.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_REPEAT);
+                self.opengl.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_REPEAT);
+            }
+            if (!repeat) {
+                self.opengl.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_NEAREST_MIPMAP_NEAREST);
+                self.opengl.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_NEAREST);
+            } else {
+                self.opengl.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
+                self.opengl.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
+            }
+            return tex_name;
+        } else {
+            console.debug("Failed to load texture data: {}\n", .{resource.file_name});
+            return null;
+        }
+    }
+
     pub fn set_viewport(self: *Renderer, viewport: [4]c_int) void {
         if (!std.mem.eql(c_int, &viewport, &self.viewport)) {
             self.viewport = viewport;
@@ -301,6 +351,18 @@ pub const Renderer = struct {
         group.set_mat4("pos_transform", transform_matrix);
         group.set_mat4("tex_transform", Matrix4.identity());
         group.set_int("sample_texture", 0);
+        return group;
+    }
+
+    pub fn texture_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, z: f32, tex_transform: Matrix4, tex_id: c_uint) RenderGroup {
+        var group = RenderGroup.new_quad(self.allocator, &self.quad_shader, &self.gl_quad, name);
+        var transform_matrix: Matrix4 = position.transform_within(self.viewport_rect);
+        group.set_float("u_Z", z);
+        group.set_vec4("color", colours.BLACK);
+        group.set_float("gap_height", 0.0);
+        group.set_mat4("pos_transform", transform_matrix);
+        group.set_mat4("tex_transform", tex_transform);
+        group.set_int("sample_texture", 2);
         return group;
     }
 

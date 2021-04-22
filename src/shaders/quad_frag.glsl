@@ -26,9 +26,12 @@ void main() {
     // static colour
     float final_alpha = color.a * AlphaValue;
     Target0 = vec4(color.rgb, final_alpha);
-  } else {
+  } else if (sample_texture == 1) {
     vec4 texture_color = texture(texture1, TexCoords);
     float final_alpha = color.a * texture_color.r * AlphaValue;
     Target0 = vec4(color.rgb, final_alpha);
+  } else {
+    vec4 texture_color = texture(texture1, TexCoords);
+    Target0 = vec4(texture_color);
   }
 }

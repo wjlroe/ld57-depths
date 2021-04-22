@@ -29,6 +29,11 @@ pub const Game = struct {
         game.renderer = renderer;
         game.allocator = allocator;
         game.floor_tiles_sprite = try sprite.Sprite.new_floor_tiles(allocator);
+        if (renderer.bind_image(game.floor_tiles_sprite.resource, false)) |texture_id| {
+            game.floor_tiles_sprite.resource.texture_id = texture_id;
+        } else {
+            return error.CouldNotBindTexture;
+        }
         try game.update_layout();
         return game;
     }
@@ -51,6 +56,9 @@ pub const Game = struct {
 
     pub fn prepare_render(self: *Game, dt: f64) void {
         // TODO: render a bunch of tiles in a grid!
+        const tile_pos = Rect.from_top_left_bottom_right(100.0, 100.0, 164.0, 164.0);
+        const z = 0.5;
+        self.renderer.push_render_group(self.floor_tiles_sprite.as_render_group("floor_tile", self.renderer, tile_pos, z));
     }
 
     pub fn process_command(self: *Game, cmd: command.Command) void {
