@@ -132,7 +132,7 @@ pub const Sprite = struct {
         }
     }
 
-    pub fn as_render_group(self: *Sprite, name: [*c]const u8, renderer: *Renderer, position: Rect, z: f32) RenderGroup {
+    pub fn as_render_group(self: *Sprite, name: []const u8, renderer: *Renderer, position: Rect, z: f32) RenderGroup {
         const tex_transform = self.get_transform(false);
         return renderer.texture_as_render_group(name, position, z, tex_transform, self.resource.texture_id);
     }

@@ -311,19 +311,19 @@ pub const Renderer = struct {
         }
     }
 
-    pub fn horizontal_line_as_render_group(self: *Renderer, name: [*c]const u8, y: f32, colour: colours.Colour, z: f32) RenderGroup {
+    pub fn horizontal_line_as_render_group(self: *Renderer, name: []const u8, y: f32, colour: colours.Colour, z: f32) RenderGroup {
         const pos = Rect.new([_]f32{ self.viewport_rect.center[0], y }, [_]f32{ self.viewport_rect.bounds[0], 1 });
         var group = self.rect_as_render_group(name, pos, colour, z);
         return group;
     }
 
-    pub fn vertical_line_as_render_group(self: *Renderer, name: [*c]const u8, x: f32, colour: colours.Colour, z: f32) RenderGroup {
+    pub fn vertical_line_as_render_group(self: *Renderer, name: []const u8, x: f32, colour: colours.Colour, z: f32) RenderGroup {
         const pos = Rect.new([_]f32{ x, self.viewport_rect.center[1] }, [_]f32{ 1, self.viewport_rect.bounds[1] });
         var group = self.rect_as_render_group(name, pos, colour, z);
         return group;
     }
 
-    pub fn crosshair_as_render_group(self: *Renderer, name: [*c]const u8, x: f32, y: f32, width: f32, colour: colours.Colour, z: f32) [2]RenderGroup {
+    pub fn crosshair_as_render_group(self: *Renderer, name: []const u8, x: f32, y: f32, width: f32, colour: colours.Colour, z: f32) [2]RenderGroup {
         var hori = self.rect_as_render_group(name, Rect.new([_]f32{x, y}, [_]f32{ width, 1.0}), colour, z);
         hori.depth_testing = false;
         var vert = self.rect_as_render_group(name, Rect.new([_]f32{x, y}, [_]f32{ 1.0, width}), colour, z);
@@ -331,7 +331,7 @@ pub const Renderer = struct {
         return [_]RenderGroup{hori, vert};
     }
 
-    pub fn outline_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, colour: colours.Colour, z: f32, thickness: f32) [2]RenderGroup {
+    pub fn outline_as_render_group(self: *Renderer, name: []const u8, position: Rect, colour: colours.Colour, z: f32, thickness: f32) [2]RenderGroup {
         // TODO: group both quad renders into the one "group", so they are grouped via push debug group etc.
         var smaller_rect = position;
         smaller_rect.bounds[0] -= thickness * 2.0;
@@ -342,7 +342,7 @@ pub const Renderer = struct {
         };
     }
 
-    pub fn rect_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, colour: colours.Colour, z: f32) RenderGroup {
+    pub fn rect_as_render_group(self: *Renderer, name: []const u8, position: Rect, colour: colours.Colour, z: f32) RenderGroup {
         var group = RenderGroup.new_quad(self.allocator, &self.quad_shader, &self.gl_quad, name);
         var transform_matrix: Matrix4 = position.transform_within(self.viewport_rect);
         group.set_vec4("color", colour);
@@ -354,7 +354,7 @@ pub const Renderer = struct {
         return group;
     }
 
-    pub fn texture_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, z: f32, tex_transform: Matrix4, tex_id: c_uint) RenderGroup {
+    pub fn texture_as_render_group(self: *Renderer, name: []const u8, position: Rect, z: f32, tex_transform: Matrix4, tex_id: c_uint) RenderGroup {
         var group = RenderGroup.new_quad(self.allocator, &self.quad_shader, &self.gl_quad, name);
         var transform_matrix: Matrix4 = position.transform_within(self.viewport_rect);
         group.set_float("u_Z", z);
@@ -366,7 +366,7 @@ pub const Renderer = struct {
         return group;
     }
 
-    pub fn circle_as_render_group(self: *Renderer, name: [*c]const u8, position: Rect, colour: colours.Colour, z: f32) RenderGroup {
+    pub fn circle_as_render_group(self: *Renderer, name: []const u8, position: Rect, colour: colours.Colour, z: f32) RenderGroup {
         var group = RenderGroup.new_quad(self.allocator, &self.circle_shader, &self.gl_quad, name);
         var transform_matrix: Matrix4 = position.transform_within(self.viewport_rect);
         group.set_vec4("color", colour);
