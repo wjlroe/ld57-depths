@@ -282,6 +282,9 @@ pub const Renderer = struct {
         if (!std.mem.eql(c_int, &viewport, &self.viewport)) {
             self.viewport = viewport;
             self.viewport_rect = Rect.from_top_left_bottom_right(0.0, 0.0, @intToFloat(f32, viewport[2]), @intToFloat(f32, viewport[3]));
+            console.debug("viewport changed. viewport: ", .{});
+            self.viewport_rect.print(self.allocator) catch unreachable;
+            console.debug("\n", .{});
             self.opengl.glViewport(self.viewport[0], self.viewport[1], self.viewport[2], self.viewport[3]);
         }
     }
