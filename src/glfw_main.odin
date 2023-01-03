@@ -20,6 +20,41 @@ glfw_error_callback :: proc "c" (error_code: i32, error_description: cstring) {
 	log.errorf("error (code: %d): %s", error_code, error_description)
 }
 
+create_window :: proc(window: ^Window) -> (ok: bool) {
+	glfw.WindowHint(glfw.SAMPLES, 4)
+	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, window.renderer.opengl_version.major)
+	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, window.renderer.opengl_version.minor)
+	// FIXME: is forward_compat obsolete?
+	glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, 1)
+	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+	glfw.WindowHint(glfw.SCALE_TO_MONITOR, 1)
+	window.glfw_window_handle = glfw.CreateWindow(
+		1920,
+		1080,
+		"Base Code",
+		nil,
+		nil,
+	)
+	if (window.glfw_window_handle != nil) {
+		ok = true
+	}
+	return
+}
+
+create_window_with_opengl_version :: proc() -> (window: Window, ok: bool) {
+	versions := []OpenGL_Version{{4,1}}
+
+	for version in versions {
+		window.renderer.opengl_version = version
+		ok = create_window(&window)
+		if (ok) {
+			break
+		}
+	}
+
+	return
+}
+
 main :: proc() {
 	context = setup_context()
 
@@ -31,4 +66,64 @@ main :: proc() {
 		os.exit(1)
 	}
 	defer glfw.Terminate()
+
+	glfw_major, glfw_minor, glfw_rev : i32 = glfw.GetVersion()
+	log.infof("GLFW version: %d.%d.%d", glfw_major, glfw_minor, glfw_rev)
+
+	window, window_created := create_window_with_opengl_version()
+	if (!window_created) {
+		log.error("Creating a window failed!")
+		os.exit(1)
+	}
+	defer glfw.DestroyWindow(window.glfw_window_handle)
+	window.keep_open = true
+
+	{
+		xscale, yscale := glfw.GetWindowContentScale(window.glfw_window_handle)
+		window.content_scale = v2{xscale, yscale}
+	}
+
+	// Setup glfw callbacks (input, etc.)
+
+	glfw.MakeContextCurrent(window.glfw_window_handle)
+
+	{
+		width, height := glfw.GetWindowSize(window.glfw_window_handle)
+		window.window_dim = v2s{int(width), int(height)}
+	}
+
+	{
+		width, height := glfw.GetFramebufferSize(window.glfw_window_handle)
+		window.renderer.framebuffer_dim = v2s{int(width), int(height)}
+		window.framebuffer_dim = v2s{int(width), int(height)}
+	}
+
+	switch window.renderer.opengl_version {
+		case {4,1}:
+			activate_gl_4_1(&window.renderer)
+		case:
+			log.errorf("Unknown OpenGL version: %v", window.renderer.opengl_version)
+			os.exit(1)
+	}
+	window.renderer->impl_setup(glfw.gl_set_proc_address)
+
+	glfw.SwapInterval(1)
+
+	previous_frame_time := glfw.GetTime()
+
+	for (window.keep_open) {
+		frame_time := glfw.GetTime()
+		dt := frame_time - previous_frame_time
+		previous_frame_time = frame_time
+
+		window.renderer->impl_render()
+		glfw.SwapBuffers(window.glfw_window_handle)
+		glfw.PollEvents()
+
+		if (cast(bool)glfw.WindowShouldClose(window.glfw_window_handle)) {
+			window.keep_open = false
+		}
+	}
+
+	log.info("Done")
 }
