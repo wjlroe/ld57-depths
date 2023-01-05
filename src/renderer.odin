@@ -21,12 +21,24 @@ OpenGL_Version :: struct {
 	minor: i32,
 }
 
+max_textures :: 16
+
 Renderer :: struct {
 	using renderer_vtable: Renderer_VTable,
 	name: string,
 
 	opengl_version: OpenGL_Version,
 	framebuffer_dim: v2s,
+	textures: [max_textures]OpenGL_Texture,
+	num_textures: int,
+}
+
+push_texture :: proc(renderer: ^Renderer, texture: OpenGL_Texture) -> (texture_id: int) {
+	assert(renderer.num_textures < len(renderer.textures))
+	texture_id = renderer.num_textures
+	renderer.textures[texture_id] = texture
+	renderer.num_textures += 1
+	return
 }
 
 activate_gl_4_1 :: proc(renderer: ^Renderer) {

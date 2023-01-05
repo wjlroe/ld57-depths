@@ -20,6 +20,33 @@ glfw_error_callback :: proc "c" (error_code: i32, error_description: cstring) {
 	log.errorf("error (code: %d): %s", error_code, error_description)
 }
 
+window_size_callback :: proc "c" (handle: glfw.WindowHandle, width: i32, height: i32) {
+}
+
+framebuffer_size_callback :: proc "c" (handle: glfw.WindowHandle, width: i32, height: i32) {
+}
+
+window_content_scale_callback :: proc "c" (window_handle: glfw.WindowHandle, xscale, yscale: f32) {
+}
+
+window_pos_callback :: proc "c" (handle: glfw.WindowHandle, x, y: i32) {
+}
+
+window_key_callback :: proc "c" (handle: glfw.WindowHandle, key, scancode, action, mods: i32) {
+}
+
+window_char_callback :: proc "c" (handle: glfw.WindowHandle, codepoint: rune) {
+}
+
+cursor_position_callback :: proc "c" (window_handle: glfw.WindowHandle, xpos, ypos: f64) {
+}
+
+mouse_button_callback :: proc "c" (window_handle: glfw.WindowHandle, button, action, mods: i32) {
+}
+
+mouse_scroll_callback :: proc "c" (window_handle: glfw.WindowHandle, xoffset, yoffset: f64) {
+}
+
 create_window :: proc(window: ^Window) -> (ok: bool) {
 	glfw.WindowHint(glfw.SAMPLES, 4)
 	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, window.renderer.opengl_version.major)
@@ -55,6 +82,8 @@ create_window_with_opengl_version :: proc() -> (window: Window, ok: bool) {
 	return
 }
 
+game : Game
+
 main :: proc() {
 	context = setup_context()
 
@@ -84,6 +113,15 @@ main :: proc() {
 	}
 
 	// Setup glfw callbacks (input, etc.)
+	glfw.SetWindowSizeCallback(window.glfw_window_handle, window_size_callback)
+	glfw.SetFramebufferSizeCallback(window.glfw_window_handle, framebuffer_size_callback)
+	glfw.SetWindowContentScaleCallback(window.glfw_window_handle, window_content_scale_callback)
+	glfw.SetWindowPosCallback(window.glfw_window_handle, window_pos_callback)
+	glfw.SetKeyCallback(window.glfw_window_handle, window_key_callback)
+	glfw.SetCharCallback(window.glfw_window_handle, window_char_callback)
+	glfw.SetCursorPosCallback(window.glfw_window_handle, cursor_position_callback)
+	glfw.SetMouseButtonCallback(window.glfw_window_handle, mouse_button_callback)
+	glfw.SetScrollCallback(window.glfw_window_handle, mouse_scroll_callback)
 
 	glfw.MakeContextCurrent(window.glfw_window_handle)
 
@@ -106,6 +144,8 @@ main :: proc() {
 			os.exit(1)
 	}
 	window.renderer->impl_setup(glfw.gl_set_proc_address)
+
+	init_game(&game, &window.renderer)
 
 	glfw.SwapInterval(1)
 
