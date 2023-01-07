@@ -228,6 +228,8 @@ compile_shaders_to_program :: proc(vertex_shader_source: ^cstring, fragment_shad
 gl_max_texture_size : i32
 
 setup_renderer_gl_4_1 :: proc(renderer: ^Renderer, gl_loader: Set_Proc_Address_Type) {
+	gl.load_up_to(renderer.opengl_version.major, renderer.opengl_version.minor, gl_loader)
+
 	gl.GetIntegerv(gl.MAX_TEXTURE_SIZE, &gl_max_texture_size)
 
 	renderer_info := gl.GetString(gl.RENDERER)

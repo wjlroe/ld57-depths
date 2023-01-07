@@ -17,8 +17,8 @@ Renderer_VTable :: struct {
 }
 
 OpenGL_Version :: struct {
-	major: i32,
-	minor: i32,
+	major: int,
+	minor: int,
 }
 
 max_textures :: 16
@@ -43,5 +43,5 @@ push_texture :: proc(renderer: ^Renderer, texture: OpenGL_Texture) -> (texture_i
 
 activate_gl_4_1 :: proc(renderer: ^Renderer) {
 	renderer.renderer_vtable = vtable_renderer_gl_4_1
-	renderer.name = "OpenGL 4.1"
+	renderer.name = "OpenGL"
 }

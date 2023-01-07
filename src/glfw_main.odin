@@ -49,8 +49,8 @@ mouse_scroll_callback :: proc "c" (window_handle: glfw.WindowHandle, xoffset, yo
 
 create_window :: proc(window: ^Window) -> (ok: bool) {
 	glfw.WindowHint(glfw.SAMPLES, 4)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, window.renderer.opengl_version.major)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, window.renderer.opengl_version.minor)
+	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, i32(window.renderer.opengl_version.major))
+	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, i32(window.renderer.opengl_version.minor))
 	// FIXME: is forward_compat obsolete?
 	glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, 1)
 	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
@@ -69,7 +69,7 @@ create_window :: proc(window: ^Window) -> (ok: bool) {
 }
 
 create_window_with_opengl_version :: proc() -> (window: Window, ok: bool) {
-	versions := []OpenGL_Version{{4,1}}
+	versions := []OpenGL_Version{{4,5},{4,1}}
 
 	for version in versions {
 		window.renderer.opengl_version = version
@@ -136,13 +136,8 @@ main :: proc() {
 		window.framebuffer_dim = v2s{int(width), int(height)}
 	}
 
-	switch window.renderer.opengl_version {
-		case {4,1}:
-			activate_gl_4_1(&window.renderer)
-		case:
-			log.errorf("Unknown OpenGL version: %v", window.renderer.opengl_version)
-			os.exit(1)
-	}
+	// We only have one GL renderer, which assumes 4.1 for most stuff
+	activate_gl_4_1(&window.renderer)
 	window.renderer->impl_setup(glfw.gl_set_proc_address)
 
 	init_game(&game, &window.renderer)
