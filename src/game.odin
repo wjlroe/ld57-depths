@@ -1,5 +1,7 @@
 package main
 
+game_title :: "Base Code"
+
 Game :: struct {
     running: bool,
     renderer: ^Renderer,

@@ -56,9 +56,9 @@ create_window :: proc(window: ^Window) -> (ok: bool) {
 	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 	glfw.WindowHint(glfw.SCALE_TO_MONITOR, 1)
 	window.glfw_window_handle = glfw.CreateWindow(
-		1920,
-		1080,
-		"Base Code",
+		1280,
+		800,
+		game_title,
 		nil,
 		nil,
 	)
