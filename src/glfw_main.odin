@@ -55,6 +55,7 @@ create_window :: proc(window: ^Window) -> (ok: bool) {
 	glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, 1)
 	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 	glfw.WindowHint(glfw.SCALE_TO_MONITOR, 1)
+	glfw.WindowHint(glfw.RESIZABLE, 0)
 	window.glfw_window_handle = glfw.CreateWindow(
 		1280,
 		800,
