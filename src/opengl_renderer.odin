@@ -462,7 +462,6 @@ render_gl_4_1 :: proc(renderer: ^Renderer) {
 					bind_gl_uniform(loc, identity_matrix)
 				}
 
-
 				{
 					loc, ok := shader.uniforms["color"]
 					if !ok {
