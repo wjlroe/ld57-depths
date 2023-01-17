@@ -1,0 +1,85 @@
+package main
+
+Quad :: struct {
+	position: rectangle2,
+	z: f32,
+	texture: rectangle2,
+	debug_info: string,
+}
+
+Render_Settings :: enum {
+	QuadShader,
+	DepthTesting,
+	AlphaBlending,
+	FaceCulling,
+	ClearColor,
+	ClearDepth,
+	Viewport,
+}
+Render_Settings_Set :: bit_set[Render_Settings]
+
+Uniform_Data :: struct {
+	setting: enum {
+		Texture,
+		Z,
+	},
+	data: union {
+		int, // e.g. texture ID
+		u32,
+		i32,
+		f32,
+		v4,
+		matrix[4,4]f32,
+	},
+}
+
+max_uniform_data :: 16
+
+Render_Group :: struct {
+	debug_name: cstring,
+	settings: Render_Settings_Set,
+	uniforms: [max_uniform_data]Uniform_Data,
+	num_uniforms: int,
+	data: union {
+		[]Quad,
+		rectangle2,
+		rectangle2s,
+		v4, // ClearColor color
+	},
+	num_elements: int, // FIXME: is this too-implementation specific?
+}
+
+push_uniform_data :: proc(render_group: ^Render_Group, uniform_data: Uniform_Data) {
+	assert(render_group.num_uniforms < max_uniform_data)
+	render_group.uniforms[render_group.num_uniforms] = uniform_data
+	render_group.num_uniforms += 1
+}
+
+texture_as_render_group :: proc(renderer: ^Renderer, texture_name: string, debug_name: cstring, position: rectangle2, texture: rectangle2, z: f32) -> Render_Group {
+	// pos_transform := screen_transform_for_position(position, renderer.viewport)
+	// shader := &renderer.shaders[shader_id]
+	// TODO: how do we 'bind' generic RenderGroup data to renderer-specific shader locations etc.?
+	render_group := Render_Group {
+		debug_name = debug_name,
+		settings = {.QuadShader},
+		data = []Quad{{
+			position = position,
+			z = z,
+			texture = texture,
+		}},
+	}
+	texture_id := renderer.textures[texture_name].id
+	push_uniform_data(&render_group, Uniform_Data{
+		setting = .Texture,
+		data = texture_id,
+	})
+	return render_group
+}
+
+clear_render_group :: proc(color: v4) -> Render_Group {
+	render_group := Render_Group {
+		settings = {.ClearColor, .ClearDepth},
+		data = color,
+	}
+	return render_group
+}

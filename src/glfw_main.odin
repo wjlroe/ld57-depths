@@ -47,10 +47,12 @@ mouse_button_callback :: proc "c" (window_handle: glfw.WindowHandle, button, act
 mouse_scroll_callback :: proc "c" (window_handle: glfw.WindowHandle, xoffset, yoffset: f64) {
 }
 
+// FIXME: this is specific to OpenGL
 create_window :: proc(window: ^Window) -> (ok: bool) {
+	opengl_renderer := window.renderer.variant.(^OpenGL_Renderer)
 	glfw.WindowHint(glfw.SAMPLES, 4)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, i32(window.renderer.opengl_version.major))
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, i32(window.renderer.opengl_version.minor))
+	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, i32(opengl_renderer.opengl_version.major))
+	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, i32(opengl_renderer.opengl_version.minor))
 	// FIXME: is forward_compat obsolete?
 	glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, 1)
 	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
@@ -69,11 +71,14 @@ create_window :: proc(window: ^Window) -> (ok: bool) {
 	return
 }
 
+// FIXME: this is specific to OpenGL
 create_window_with_opengl_version :: proc() -> (window: Window, ok: bool) {
+	window.renderer.variant = new(OpenGL_Renderer)
+	opengl_renderer := window.renderer.variant.(^OpenGL_Renderer)
 	versions := []OpenGL_Version{{4,5},{4,1}}
 
 	for version in versions {
-		window.renderer.opengl_version = version
+		opengl_renderer.opengl_version = version
 		ok = create_window(&window)
 		if (ok) {
 			break
@@ -152,9 +157,11 @@ main :: proc() {
 		dt := frame_time - previous_frame_time
 		previous_frame_time = frame_time
 
+		render_game(&game)
 		window.renderer->impl_render()
 		glfw.SwapBuffers(window.glfw_window_handle)
 		glfw.PollEvents()
+		window.renderer->impl_end_frame()
 
 		if (cast(bool)glfw.WindowShouldClose(window.glfw_window_handle)) {
 			window.keep_open = false

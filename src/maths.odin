@@ -236,6 +236,13 @@ screen_transform_for_position :: proc(position, within: rectangle2) -> matrix[4,
 	return translation * scale
 }
 
+identity_matrix :: matrix[4,4]f32{
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0,
+}
+
 scale_matrix :: proc(x, y, z: f32) -> matrix[4,4]f32 {
 	scale := matrix[4,4]f32{
 		x, 0.0, 0.0, 0.0,
