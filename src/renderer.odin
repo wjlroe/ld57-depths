@@ -24,6 +24,7 @@ Texture :: struct {
 	name: string,
 	id: int,
 	resource: ^Resource,
+	dim: v2s,
 }
 
 // TODO: how to store renderer-specific data?
@@ -42,24 +43,26 @@ Renderer :: struct {
 	variant: union{^OpenGL_Renderer},
 }
 
-set_resource_as_texture :: proc(renderer: ^Renderer, name: string, resource: ^Resource) {
-	renderer.textures[name] = Texture {
-		name = name,
-		id = renderer.next_texture_id,
-		resource = resource,
-	}
-	renderer.next_texture_id += 1
+set_resource_as_texture :: proc(renderer: ^Renderer, name: string, resource: ^Resource) -> ^Texture {
 	img, err := png.load_from_bytes(resource.data^)
 	if err != nil {
 		log.error(err)
 		os.exit(1)
 	}
+	defer free(img)
 	if !image.is_valid_image(img) {
 		log.error("Not a valid image!")
 		os.exit(1)
 	}
-	defer free(img)
+	renderer.textures[name] = Texture {
+		name = name,
+		id = renderer.next_texture_id,
+		resource = resource,
+		dim = v2s{img.width, img.height},
+	}
+	renderer.next_texture_id += 1
 	renderer->impl_create_texture(name, img, Color_Format.RGBA)
+	return &renderer.textures[name]
 }
 
 push_render_group :: proc(renderer: ^Renderer, render_group: Render_Group) {

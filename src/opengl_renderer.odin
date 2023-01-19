@@ -367,10 +367,38 @@ bind_gl_uniform :: proc(location: u32, uniform: OpenGL_Uniform) {
 	}
 }
 
+gl_version_available :: proc(renderer: ^OpenGL_Renderer, version: OpenGL_Version) -> bool {
+	if renderer.opengl_version.major > version.major {
+		return true
+	}
+	if renderer.opengl_version.major < version.major {
+		return false
+	}
+	return renderer.opengl_version.minor >= version.minor
+}
+
+gl_push_debug :: proc(renderer: ^OpenGL_Renderer, text: cstring) {
+	if gl_version_available(renderer, OpenGL_Version{4, 5}) {
+		gl.PushDebugGroup(gl.DEBUG_SOURCE_APPLICATION, 1, -1, text)
+	}
+}
+
+gl_pop_debug :: proc(renderer: ^OpenGL_Renderer) {
+	if gl_version_available(renderer, OpenGL_Version{4, 5}) {
+		gl.PopDebugGroup()
+	}
+}
+
 render_gl_4_1 :: proc(renderer: ^Renderer) {
 	opengl_renderer := renderer.variant.(^OpenGL_Renderer)
 	for _, i in renderer.render_groups {
 		group := &renderer.render_groups[i]
+
+		when ODIN_DEBUG {
+			if len(group.debug_name) > 0 {
+				gl_push_debug(opengl_renderer, group.debug_name)
+			}
+		}
 
 		if .ClearColor in group.settings {
 			clear_bits : u32 = gl.COLOR_BUFFER_BIT
@@ -380,7 +408,6 @@ render_gl_4_1 :: proc(renderer: ^Renderer) {
 			color := group.data.(v4)
 			gl.ClearColor(color.r, color.g, color.b, color.a)
 			gl.Clear(clear_bits)
-			continue
 		}
 
 		if .Viewport in group.settings {
@@ -395,48 +422,84 @@ render_gl_4_1 :: proc(renderer: ^Renderer) {
 			assert(shader_id < len(opengl_renderer.shaders))
 			shader := &opengl_renderer.shaders[shader_id]
 
+			gl.UseProgram(u32(shader.program_id))
+
+			if .DepthTesting in group.settings {
+				gl.Enable(gl.DEPTH_TEST)
+				gl.DepthFunc(gl.LESS)
+			} else {
+				gl.Disable(gl.DEPTH_TEST)
+			}
+			if .AlphaBlending in group.settings {
+				gl.Enable(gl.BLEND)
+				gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+			} else {
+				gl.Disable(gl.BLEND)
+			}
+			if .FaceCulling in group.settings {
+				gl.Enable(gl.CULL_FACE)
+			} else {
+				gl.Disable(gl.CULL_FACE)
+			}
+
+			gl.BindVertexArray(shader.vao)
+
+			for uniform_data in group.uniforms[:group.num_uniforms] {
+				switch uniform_data.setting {
+					case .Texture:
+						texture_id := uniform_data.data.(int)
+						gl_texture := opengl_renderer.gl_textures[texture_id]
+						gl.BindTexture(gl.TEXTURE_2D, gl_texture.opengl_id)
+					case .Z:
+						loc, ok := shader.uniforms["u_Z"]
+						if !ok {
+							log.error("no u_Z uniform location!")
+						}
+						bind_gl_uniform(loc, uniform_data.data.(f32))
+					case .Texture_Transform:
+						loc, ok := shader.uniforms["tex_transform"]
+						if !ok {
+							log.error("no tex_transform uniform location!")
+						}
+						transform := uniform_data.data.(matrix[4,4]f32)
+						bind_gl_uniform(loc, transform)
+				}
+			}
+
+			{
+				loc, ok := shader.uniforms["ortho_transform"]
+				if !ok {
+					log.error("no ortho_transform uniform location!")
+				}
+				bind_gl_uniform(loc, renderer.ortho_projection)
+			}
+
+			{
+				loc, ok := shader.uniforms["color"]
+				if !ok {
+					log.error("no color uniform location!")
+				}
+				bind_gl_uniform(loc, color_red)
+			}
+
+			{
+				loc, ok := shader.uniforms["sample_texture"]
+				if !ok {
+					log.error("no sample_texture location!")
+				}
+				bind_gl_uniform(loc, i32(2))
+			}
+
+			{
+				sampler, ok := shader.samplers["texture1"]
+				if !ok {
+					log.error("no texture1! sampler!")
+				}
+				bind_gl_uniform(sampler.shader_location, i32(sampler.shader_idx))
+				gl.ActiveTexture(u32(gl.TEXTURE0 + sampler.shader_idx))
+			}
+
 			for quad in group.data.([]Quad) {
-				gl.UseProgram(u32(shader.program_id))
-
-				// FIXME: move these into the render_group setup
-				// gl.Uniform4fv(i32(renderer.quad_shader.color_location), 1, &color_pink[0])
-				// gl.Uniform1ui(i32(renderer.quad_shader.settings_location), u32(transmute(u8)group.shader_settings))
-				// gl.Uniform1f(i32(renderer.quad_shader.z_location), quad.z)
-				// gl.UniformMatrix4fv(i32(renderer.quad_shader.ortho_location), 1, gl.FALSE, &renderer.ortho_projection[0][0])
-
-				// Should we look up locations in the shader here rather than
-				// bake the locations into RenderGroup? Because the location is
-				// shader-specific
-				// TODO: whether something is an uniform or vertex etc is renderer
-				// or API specific, not a RenderGroup concern
-				if .DepthTesting in group.settings {
-					gl.Enable(gl.DEPTH_TEST)
-					gl.DepthFunc(gl.LESS)
-				} else {
-					gl.Disable(gl.DEPTH_TEST)
-				}
-				if .AlphaBlending in group.settings {
-					gl.Enable(gl.BLEND)
-					gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-				} else {
-					gl.Disable(gl.BLEND)
-				}
-				if .FaceCulling in group.settings {
-					gl.Enable(gl.CULL_FACE)
-				} else {
-					gl.Disable(gl.CULL_FACE)
-				}
-
-				gl.BindVertexArray(shader.vao)
-
-				{
-					loc, ok := shader.uniforms["u_Z"]
-					if !ok {
-						log.error("no u_Z uniform location!")
-					}
-					bind_gl_uniform(loc, quad.z)
-				}
-
 				pos_transform := screen_transform_for_position(quad.position, renderer.viewport)
 				{
 					pos_uniform, ok := shader.uniforms["pos_transform"]
@@ -446,60 +509,16 @@ render_gl_4_1 :: proc(renderer: ^Renderer) {
 					bind_gl_uniform(pos_uniform, pos_transform)
 				}
 
-				{
-					loc, ok := shader.uniforms["ortho_transform"]
-					if !ok {
-						log.error("no ortho_transform uniform location!")
-					}
-					bind_gl_uniform(loc, renderer.ortho_projection)
-				}
-
-				{
-					loc, ok := shader.uniforms["tex_transform"]
-					if !ok {
-						log.error("no tex_transform uniform location!")
-					}
-					bind_gl_uniform(loc, identity_matrix)
-				}
-
-				{
-					loc, ok := shader.uniforms["color"]
-					if !ok {
-						log.error("no color uniform location!")
-					}
-					bind_gl_uniform(loc, color_red)
-				}
-
-				{
-					loc, ok := shader.uniforms["sample_texture"]
-					if !ok {
-						log.error("no sample_texture location!")
-					}
-					bind_gl_uniform(loc, i32(2))
-				}
-
-				{
-					sampler, ok := shader.samplers["texture1"]
-					if !ok {
-						log.error("no texture1! sampler!")
-					}
-					bind_gl_uniform(sampler.shader_location, i32(sampler.shader_idx))
-					gl.ActiveTexture(u32(gl.TEXTURE0 + sampler.shader_idx))
-				}
-
-				{
-					texture, ok := renderer.textures["floor_tiles.png"]
-					if !ok {
-						log.error("no floor_tiles.png texture found!")
-					}
-					gl_texture := opengl_renderer.gl_textures[texture.id]
-					gl.BindTexture(gl.TEXTURE_2D, gl_texture.opengl_id)
-				}
-
 				gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 			}
 		} else {
 			// log.debug("not a quad?")
+		}
+
+		when ODIN_DEBUG {
+			if len(group.debug_name) > 0 {
+				gl_pop_debug(opengl_renderer)
+			}
 		}
 	}
 }

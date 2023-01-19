@@ -157,6 +157,7 @@ main :: proc() {
 		dt := frame_time - previous_frame_time
 		previous_frame_time = frame_time
 
+		update_game(&game, dt)
 		render_game(&game)
 		window.renderer->impl_render()
 		glfw.SwapBuffers(window.glfw_window_handle)

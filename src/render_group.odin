@@ -18,11 +18,14 @@ Render_Settings :: enum {
 }
 Render_Settings_Set :: bit_set[Render_Settings]
 
+Uniform_Type :: enum {
+	Texture,
+	Z,
+	Texture_Transform,
+}
+
 Uniform_Data :: struct {
-	setting: enum {
-		Texture,
-		Z,
-	},
+	setting: Uniform_Type,
 	data: union {
 		int, // e.g. texture ID
 		u32,
@@ -55,7 +58,7 @@ push_uniform_data :: proc(render_group: ^Render_Group, uniform_data: Uniform_Dat
 	render_group.num_uniforms += 1
 }
 
-texture_as_render_group :: proc(renderer: ^Renderer, texture_name: string, debug_name: cstring, position: rectangle2, texture: rectangle2, z: f32) -> Render_Group {
+texture_as_render_group :: proc(renderer: ^Renderer, texture_name: string, debug_name: cstring, position: rectangle2, tex_transform: matrix[4,4]f32, z: f32) -> Render_Group {
 	// pos_transform := screen_transform_for_position(position, renderer.viewport)
 	// shader := &renderer.shaders[shader_id]
 	// TODO: how do we 'bind' generic RenderGroup data to renderer-specific shader locations etc.?
@@ -64,8 +67,6 @@ texture_as_render_group :: proc(renderer: ^Renderer, texture_name: string, debug
 		settings = {.QuadShader},
 		data = []Quad{{
 			position = position,
-			z = z,
-			texture = texture,
 		}},
 	}
 	texture_id := renderer.textures[texture_name].id
@@ -73,11 +74,20 @@ texture_as_render_group :: proc(renderer: ^Renderer, texture_name: string, debug
 		setting = .Texture,
 		data = texture_id,
 	})
+	push_uniform_data(&render_group, Uniform_Data{
+		setting = .Z,
+		data = z,
+	})
+	push_uniform_data(&render_group, Uniform_Data{
+		setting = .Texture_Transform,
+		data = tex_transform,
+	})
 	return render_group
 }
 
 clear_render_group :: proc(color: v4) -> Render_Group {
 	render_group := Render_Group {
+		debug_name = "clear_color_depth",
 		settings = {.ClearColor, .ClearDepth},
 		data = color,
 	}
