@@ -216,8 +216,8 @@ get_program_info :: proc(program_id: u32, object_param: u32) -> (ok: bool, error
 		max_len :: 1024
 		info_log : [max_len]u8
 		gl.GetProgramInfoLog(program_id, max_len, &info_len, &info_log[0])
-		link_error := info_log[0:info_len]
-		error = string(link_error)
+		link_error := string(info_log[0:info_len])
+		error = strings.clone(link_error)
 	}
 	return
 }
