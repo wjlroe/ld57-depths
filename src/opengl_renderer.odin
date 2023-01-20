@@ -263,16 +263,9 @@ compile_shaders_to_program :: proc(shader: ^OpenGL_Shader, vertex_shader_source:
 	gl.AttachShader(shader.program_id, vertex_shader_id)
 	gl.AttachShader(shader.program_id, fragment_shader_id)
 	gl.LinkProgram(shader.program_id)
-	when ODIN_DEBUG {
-		check_shader_linking(shader.program_id)
-	}
 
 	gl.DeleteShader(vertex_shader_id)
 	gl.DeleteShader(fragment_shader_id)
-
-	when ODIN_DEBUG {
-		check_shader_program_valid(shader.program_id)
-	}
 }
 
 gl_max_texture_size : i32
@@ -319,6 +312,12 @@ setup_renderer_gl_4_1 :: proc(renderer: ^Renderer, gl_loader: Set_Proc_Address_T
 
 		gl.VertexAttribPointer(u32(tex_loc), i32(quad_tex_len), gl.FLOAT, gl.FALSE, i32(quad_stride * size_of(type_of(quad_vertices[0]))), uintptr(quad_pos_len * size_of(type_of(quad_vertices[0]))))
 		gl.EnableVertexAttribArray(u32(tex_loc))
+
+		when ODIN_DEBUG {
+			// NOTE: macOS needs the VAO to be bound before validating the shader
+			check_shader_linking(quad_shader.program_id)
+			check_shader_program_valid(quad_shader.program_id)
+		}
 
 		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 		gl.BindVertexArray(0)
