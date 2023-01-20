@@ -22,6 +22,9 @@ Game :: struct {
 }
 
 init_game :: proc(game: ^Game, renderer: ^Renderer) {
+    game.running = true
+    game.renderer = renderer
+
     game.resources = map[string]Resource{
        "floor_tiles.png" =  Resource {
             file_name = "floor_tiles.png",
@@ -34,8 +37,6 @@ init_game :: proc(game: ^Game, renderer: ^Renderer) {
             length = size_of(runner_image),
         },
     }
-    game.running = true
-    game.renderer = renderer
 
     floor_tiles_texture := set_resource_as_texture(renderer, "floor_tiles.png", &game.resources["floor_tiles.png"])
     runner_texture := set_resource_as_texture(renderer, "runner.png", &game.resources["runner.png"])
@@ -54,6 +55,7 @@ init_game :: proc(game: ^Game, renderer: ^Renderer) {
         tex_dim = v2s{64, 64},
         resource = &game.resources["floor_tiles.png"],
     }
+
     game.runner_sprite = Sprite {
         debug_name = "runner",
         texture_name = "runner.png",
