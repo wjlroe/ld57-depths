@@ -22,18 +22,17 @@ Game :: struct {
 }
 
 init_game :: proc(game: ^Game, renderer: ^Renderer) {
-    game.resources = make(map[string]Resource)
-    {
-        game.resources["floor_tiles.png"] = Resource {
+    game.resources = map[string]Resource{
+       "floor_tiles.png" =  Resource {
             file_name = "floor_tiles.png",
             data = &floor_tiles_image,
             length = size_of(floor_tiles_image),
-        }
-        game.resources["runner.png"] = Resource {
+        },
+        "runner.png" = Resource {
             file_name = "runner.png",
             data = &runner_image,
             length = size_of(runner_image),
-        }
+        },
     }
     game.running = true
     game.renderer = renderer
