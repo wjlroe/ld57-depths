@@ -156,7 +156,7 @@ main :: proc() {
 	window.renderer->impl_setup(glfw.gl_set_proc_address)
 
 	init_game(&game, &window.renderer)
-	defer game_uninit(&game)
+	defer uninit_game(&game)
 
 	play_sound(&sound_system, .Thunderstorm, true)
 

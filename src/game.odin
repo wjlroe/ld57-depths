@@ -67,7 +67,7 @@ init_game :: proc(game: ^Game, renderer: ^Renderer) {
     split_into_frames(&game.runner_sprite, 4, 4, 0.04)
 }
 
-game_uninit :: proc(game: ^Game) {
+uninit_game :: proc(game: ^Game) {
 }
 
 render_game :: proc(game: ^Game) {
