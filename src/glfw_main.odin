@@ -4,6 +4,7 @@ import "core:log"
 import "core:os"
 import "core:runtime"
 import glfw "vendor:glfw"
+import miniaudio "vendor:miniaudio"
 
 setup_context :: proc() -> runtime.Context {
 	c := runtime.default_context()
@@ -92,6 +93,27 @@ game : Game
 
 main :: proc() {
 	context = setup_context()
+
+	engine : miniaudio.engine = ---
+	result := miniaudio.engine_init(nil, &engine)
+	if result != miniaudio.result.SUCCESS {
+		log.error("Failed to initialize miniaudio engine")
+		os.exit(1)
+	}
+	defer miniaudio.engine_uninit(&engine)
+
+	sound : miniaudio.sound
+	miniaudio.sound_init_from_file(
+		&engine,
+		"assets/thunderstorm.wav",
+		0,
+		nil,
+		nil,
+		&sound,
+	)
+	miniaudio.sound_set_volume(&sound, 0.85)
+	miniaudio.sound_set_looping(&sound, true)
+	miniaudio.sound_start(&sound)
 
 	glfw.SetErrorCallback(glfw_error_callback)
 
