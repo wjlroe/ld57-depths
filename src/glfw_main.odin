@@ -94,27 +94,6 @@ game : Game
 main :: proc() {
 	context = setup_context()
 
-	engine : miniaudio.engine = ---
-	result := miniaudio.engine_init(nil, &engine)
-	if result != miniaudio.result.SUCCESS {
-		log.error("Failed to initialize miniaudio engine")
-		os.exit(1)
-	}
-	defer miniaudio.engine_uninit(&engine)
-
-	sound : miniaudio.sound
-	miniaudio.sound_init_from_file(
-		&engine,
-		"assets/thunderstorm.wav",
-		0,
-		nil,
-		nil,
-		&sound,
-	)
-	miniaudio.sound_set_volume(&sound, 0.85)
-	miniaudio.sound_set_looping(&sound, true)
-	miniaudio.sound_start(&sound)
-
 	glfw.SetErrorCallback(glfw_error_callback)
 
 	if (glfw.Init() == 0) {
@@ -169,6 +148,12 @@ main :: proc() {
 	window.renderer->impl_setup(glfw.gl_set_proc_address)
 
 	init_game(&game, &window.renderer)
+	defer game_uninit(&game)
+
+	// Play a thunderstorm sound on loop
+    miniaudio.sound_set_volume(&game.thunderstorm, 0.85)
+    miniaudio.sound_set_looping(&game.thunderstorm, true)
+    miniaudio.sound_start(&game.thunderstorm)
 
 	glfw.SwapInterval(1)
 

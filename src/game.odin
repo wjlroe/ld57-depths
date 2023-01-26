@@ -1,6 +1,9 @@
 package main
 
+import "core:log"
 import "core:image/png"
+import "core:os"
+import miniaudio "vendor:miniaudio"
 
 game_title :: "Base Code"
 
@@ -19,6 +22,8 @@ Game :: struct {
     resources: map[string]Resource,
     floor_tiles_sprite: Sprite,
     runner_sprite: Sprite,
+    engine: miniaudio.engine,
+    thunderstorm: miniaudio.sound,
 }
 
 init_game :: proc(game: ^Game, renderer: ^Renderer) {
@@ -63,6 +68,27 @@ init_game :: proc(game: ^Game, renderer: ^Renderer) {
         resource = &game.resources["runner.png"],
     }
     split_into_frames(&game.runner_sprite, 4, 4, 0.04)
+
+    {
+        result := miniaudio.engine_init(nil, &game.engine)
+        if result != miniaudio.result.SUCCESS {
+            log.error("Failed to initialize miniaudio engine")
+            os.exit(1)
+        }
+
+        miniaudio.sound_init_from_file(
+            &game.engine,
+            "assets/thunderstorm.wav",
+            0,
+            nil,
+            nil,
+            &game.thunderstorm,
+        )
+    }
+}
+
+game_uninit :: proc(game: ^Game) {
+    miniaudio.engine_uninit(&game.engine)
 }
 
 render_game :: proc(game: ^Game) {
