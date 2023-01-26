@@ -7,6 +7,7 @@ import miniaudio "vendor:miniaudio"
 Sound_System :: struct {
     engine: miniaudio.engine,
     thunderstorm: miniaudio.sound,
+    shutter: miniaudio.sound,
 }
 
 sound_system : Sound_System
@@ -26,8 +27,32 @@ init_sound_system :: proc(sound_system: ^Sound_System) {
         nil,
         &sound_system.thunderstorm,
     )
+    miniaudio.sound_init_from_file(
+    	&sound_system.engine,
+    	"assets/olympus_em1_m3_125th.ogg",
+    	0,
+    	nil,
+    	nil,
+    	&sound_system.shutter,
+    )
 }
 
 uninit_sound_system :: proc(sound_system: ^Sound_System) {
     miniaudio.engine_uninit(&sound_system.engine)
+}
+
+Which_Sound :: enum {
+	Thunderstorm,
+	Shutter,
+}
+
+play_sound :: proc(sound_system: ^Sound_System, which_sound: Which_Sound, loop: bool) {
+	sound : ^miniaudio.sound
+	switch which_sound {
+		case .Thunderstorm: sound = &sound_system.thunderstorm
+		case .Shutter: sound = &sound_system.shutter
+	}
+    miniaudio.sound_set_volume(sound, 0.85)
+    miniaudio.sound_set_looping(sound, b32(loop))
+    miniaudio.sound_start(sound)
 }

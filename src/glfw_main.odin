@@ -153,10 +153,8 @@ main :: proc() {
 	init_game(&game, &window.renderer)
 	defer game_uninit(&game)
 
-	// Play a thunderstorm sound on loop
-    miniaudio.sound_set_volume(&sound_system.thunderstorm, 0.85)
-    miniaudio.sound_set_looping(&sound_system.thunderstorm, true)
-    miniaudio.sound_start(&sound_system.thunderstorm)
+	play_sound(&sound_system, .Shutter, false)
+	play_sound(&sound_system, .Thunderstorm, true)
 
 	glfw.SwapInterval(1)
 
