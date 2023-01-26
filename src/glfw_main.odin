@@ -94,6 +94,9 @@ game : Game
 main :: proc() {
 	context = setup_context()
 
+	init_sound_system(&sound_system)
+	defer uninit_sound_system(&sound_system)
+
 	glfw.SetErrorCallback(glfw_error_callback)
 
 	if (glfw.Init() == 0) {
@@ -151,9 +154,9 @@ main :: proc() {
 	defer game_uninit(&game)
 
 	// Play a thunderstorm sound on loop
-    miniaudio.sound_set_volume(&game.thunderstorm, 0.85)
-    miniaudio.sound_set_looping(&game.thunderstorm, true)
-    miniaudio.sound_start(&game.thunderstorm)
+    miniaudio.sound_set_volume(&sound_system.thunderstorm, 0.85)
+    miniaudio.sound_set_looping(&sound_system.thunderstorm, true)
+    miniaudio.sound_start(&sound_system.thunderstorm)
 
 	glfw.SwapInterval(1)
 
