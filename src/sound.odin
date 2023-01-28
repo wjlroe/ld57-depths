@@ -22,7 +22,7 @@ init_sound_system :: proc(sound_system: ^Sound_System) {
 
     miniaudio.sound_init_from_file(
         &sound_system.engine,
-        "assets/thunderstorm.wav",
+        "assets/thunderstorm.ogg",
         0,
         nil,
         nil,
