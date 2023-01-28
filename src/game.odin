@@ -21,6 +21,7 @@ Game :: struct {
     resources: map[string]Resource,
     floor_tiles_sprite: Sprite,
     runner_sprite: Sprite,
+    thunder_playing: bool,
 }
 
 init_game :: proc(game: ^Game, renderer: ^Renderer) {

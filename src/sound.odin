@@ -70,3 +70,13 @@ play_sound :: proc(sound_system: ^Sound_System, which_sound: Which_Sound, loop: 
     miniaudio.sound_set_looping(sound, b32(loop))
     miniaudio.sound_start(sound)
 }
+
+pause_sound :: proc(sound_system: ^Sound_System, which_sound: Which_Sound) {
+	sound : ^miniaudio.sound
+	switch which_sound {
+		case .Thunderstorm: sound = &sound_system.thunderstorm
+		case .Shutter: sound = &sound_system.shutter
+		case .Shutter_GX9: sound = &sound_system.shutter_gx9
+	}
+	miniaudio.sound_stop(sound)
+}

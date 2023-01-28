@@ -37,6 +37,17 @@ window_key_callback :: proc "c" (handle: glfw.WindowHandle, key, scancode, actio
 }
 
 window_char_callback :: proc "c" (handle: glfw.WindowHandle, codepoint: rune) {
+	context = setup_context()
+
+	if codepoint == 't' {
+		if game.thunder_playing {
+			pause_sound(&sound_system, .Thunderstorm)
+			game.thunder_playing = false
+		} else {
+			play_sound(&sound_system, .Thunderstorm, true)
+			game.thunder_playing = true
+		}
+	}
 }
 
 cursor_position_callback :: proc "c" (window_handle: glfw.WindowHandle, xpos, ypos: f64) {
@@ -161,8 +172,6 @@ main :: proc() {
 
 	init_game(&game, &window.renderer)
 	defer uninit_game(&game)
-
-	// play_sound(&sound_system, .Thunderstorm, true)
 
 	glfw.SwapInterval(1)
 
