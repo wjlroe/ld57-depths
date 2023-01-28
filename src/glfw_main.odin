@@ -45,8 +45,12 @@ cursor_position_callback :: proc "c" (window_handle: glfw.WindowHandle, xpos, yp
 mouse_button_callback :: proc "c" (window_handle: glfw.WindowHandle, button, action, mods: i32) {
 	context = setup_context()
 
-	if button == glfw.MOUSE_BUTTON_LEFT && action == glfw.PRESS && mods == 0 {
-		play_sound(&sound_system, .Shutter, false)
+	if action == glfw.PRESS && mods == 0 {
+		if button == glfw.MOUSE_BUTTON_LEFT {
+			play_sound(&sound_system, .Shutter, false)
+		} else if button == glfw.MOUSE_BUTTON_RIGHT {
+			play_sound(&sound_system, .Shutter_GX9, false)
+		}
 	}
 }
 
@@ -158,7 +162,7 @@ main :: proc() {
 	init_game(&game, &window.renderer)
 	defer uninit_game(&game)
 
-	play_sound(&sound_system, .Thunderstorm, true)
+	// play_sound(&sound_system, .Thunderstorm, true)
 
 	glfw.SwapInterval(1)
 
