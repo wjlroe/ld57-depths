@@ -529,6 +529,8 @@ render_gl_4_1 :: proc(renderer: ^Renderer) {
 			}
 		}
 	}
+
+	gl.Flush()
 }
 
 // FIXME: work from the Texture inside Renderer, rather than unpacking it into arguments here
