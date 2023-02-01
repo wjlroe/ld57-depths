@@ -54,8 +54,8 @@ init_game :: proc(game: ^Game, renderer: ^Renderer) {
                rect = rect_min_dim(v2s{0, 0}, v2s{64, 64}),
             },
         },
-        frame_dim = v2s{64, 64},
-        tex_dim = v2s{64, 64},
+        frame_dim = floor_tiles_texture.dim,
+        tex_dim = floor_tiles_texture.dim,
         resource = &game.resources["floor_tiles.png"],
     }
 
