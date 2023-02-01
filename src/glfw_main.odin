@@ -114,6 +114,9 @@ game : Game
 main :: proc() {
 	context = setup_context()
 
+	init_debug_system(true)
+	defer uninit_debug_system()
+
 	init_sound_system(&sound_system)
 	defer uninit_sound_system(&sound_system)
 

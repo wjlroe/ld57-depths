@@ -13,6 +13,8 @@ circle_fragment_shader_source := #load("shaders/circle_frag.glsl")
 zero : uintptr = 0
 zero_ptr := cast(rawptr)zero
 
+frame_num := 0
+
 OpenGL_Version :: struct {
 	major: int,
 	minor: int,
@@ -389,6 +391,7 @@ gl_pop_debug :: proc(renderer: ^OpenGL_Renderer) {
 }
 
 render_gl_4_1 :: proc(renderer: ^Renderer) {
+	frame_num += 1
 	opengl_renderer := renderer.variant.(^OpenGL_Renderer)
 	for _, i in renderer.render_groups {
 		group := &renderer.render_groups[i]
@@ -500,6 +503,12 @@ render_gl_4_1 :: proc(renderer: ^Renderer) {
 
 			for quad in group.data.([]Quad) {
 				pos_transform := screen_transform_for_position(quad.position, renderer.viewport)
+				debug_only_once(fmt.tprintf("{}.quad.position", group.debug_name), fmt.tprintf("{}", quad.position), fmt.tprintf("Frame: {}", frame_num))
+				debug_only_once(fmt.tprintf("{}.pos_transform", group.debug_name), fmt.tprintf("{}", pos_transform), fmt.tprintf("Frame: {}", frame_num))
+				// debug_only_once(fmt.tprintf("{}.pos_transform(2)", group.debug_name), fmt.tprintf("{}", pos_transform), fmt.tprintf("Frame: {}", frame_num))
+				// if pos_transform[0][0] == 0.0 {
+				// 	log.error("zero matrix!")
+				// }
 				{
 					pos_uniform, ok := shader.uniforms["pos_transform"]
 					if !ok {

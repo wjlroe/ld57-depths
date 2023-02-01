@@ -24,7 +24,7 @@ Sprite :: struct {
 	resource: ^Resource,
 }
 
-sprite_as_render_group :: proc(sprite: ^Sprite, renderer: ^Renderer, position: rectangle2, z: f32) -> Render_Group {
+sprite_as_render_group :: proc(sprite: ^Sprite, renderer: ^Renderer, position: rectangle2, z: f32, debug_name: cstring) -> Render_Group {
 	current_frame := sprite.frames[sprite.current_frame]
 	sx := f32(sprite.frame_dim.x) / f32(sprite.tex_dim.x)
 	sy := f32(sprite.frame_dim.y) / f32(sprite.tex_dim.y)
@@ -33,7 +33,7 @@ sprite_as_render_group :: proc(sprite: ^Sprite, renderer: ^Renderer, position: r
 	scale := scale_matrix(sx, sy, 1.0)
 	translation := translation_matrix(tx, ty, 0.0)
 	tex_transform := translation * scale
-	render_group := texture_as_render_group(renderer, sprite.texture_name, sprite.debug_name, position, tex_transform, z)
+	render_group := texture_as_render_group(renderer, sprite.texture_name, debug_name, position, tex_transform, z)
 	return render_group
 }
 

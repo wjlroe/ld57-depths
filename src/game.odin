@@ -76,17 +76,17 @@ render_game :: proc(game: ^Game) {
         clear_window := clear_render_group(color_blue)
         push_render_group(game.renderer, clear_window)
     }
-    z : f32 = 0.9
+    z : f32 = -0.9
     {
         tile_size := game.floor_tiles_sprite.frame_dim.x * 2
         tile_pos : rectangle2 = rect_min_dim(v2{100.0, 100.0}, v2{f32(tile_size), f32(tile_size)})
-        push_render_group(game.renderer, sprite_as_render_group(&game.floor_tiles_sprite, game.renderer, tile_pos, z))
+        push_render_group(game.renderer, sprite_as_render_group(&game.floor_tiles_sprite, game.renderer, tile_pos, z, "floor_tiles_1"))
     }
     z -= 0.1
     {
         runner_size := game.runner_sprite.frame_dim.x * 2
         runner_pos : rectangle2 = rect_min_dim(v2{450.0, 300.0}, v2{f32(runner_size), f32(runner_size)})
-        push_render_group(game.renderer, sprite_as_render_group(&game.runner_sprite, game.renderer, runner_pos, z))
+        push_render_group(game.renderer, sprite_as_render_group(&game.runner_sprite, game.renderer, runner_pos, z, "runner_1"))
     }
 }
 

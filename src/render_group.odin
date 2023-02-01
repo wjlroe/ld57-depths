@@ -1,5 +1,7 @@
 package main
 
+import "core:fmt"
+
 Quad :: struct {
 	position: rectangle2,
 	z: f32,
@@ -69,6 +71,7 @@ texture_as_render_group :: proc(renderer: ^Renderer, texture_name: string, debug
 			position = position,
 		}},
 	}
+	debug_only_once(fmt.tprintf("{}.texture_as_render_group.position", debug_name), fmt.tprintf("{}", render_group.data.([]Quad)[0].position), "")
 	texture_id := renderer.textures[texture_name].id
 	push_uniform_data(&render_group, Uniform_Data{
 		setting = .Texture,
