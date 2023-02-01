@@ -28,8 +28,12 @@ sprite_as_render_group :: proc(sprite: ^Sprite, renderer: ^Renderer, position: r
 	current_frame := sprite.frames[sprite.current_frame]
 	sx := f32(sprite.frame_dim.x) / f32(sprite.tex_dim.x)
 	sy := f32(sprite.frame_dim.y) / f32(sprite.tex_dim.y)
-	tx := f32(current_frame.coords.x) / f32(sprite.frame_layout.x)
-	ty := f32(current_frame.coords.y) / f32(sprite.frame_layout.y)
+	tx : f32 = 0.0
+	ty : f32 = 0.0
+	if sprite.num_frames > 0 {
+		tx = f32(current_frame.coords.x) / f32(sprite.frame_layout.x)
+		ty = f32(current_frame.coords.y) / f32(sprite.frame_layout.y)
+	}
 	scale := scale_matrix(sx, sy, 1.0)
 	translation := translation_matrix(tx, ty, 0.0)
 	tex_transform := translation * scale
