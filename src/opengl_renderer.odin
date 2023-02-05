@@ -502,6 +502,8 @@ render_gl_4_1 :: proc(renderer: ^Renderer) {
 			}
 
 			for quad in group.data.([]Quad) {
+				assert(rect_width(quad.position) > 0.0)
+				assert(rect_height(quad.position) > 0.0)
 				pos_transform := screen_transform_for_position(quad.position, renderer.viewport)
 				debug_only_once(fmt.tprintf("{}.quad.position", group.debug_name), fmt.tprintf("{}", quad.position), fmt.tprintf("Frame: {}", frame_num))
 				debug_only_once(fmt.tprintf("{}.pos_transform", group.debug_name), fmt.tprintf("{}", pos_transform), fmt.tprintf("Frame: {}", frame_num))

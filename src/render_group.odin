@@ -64,6 +64,8 @@ texture_as_render_group :: proc(renderer: ^Renderer, texture_name: string, debug
 	// pos_transform := screen_transform_for_position(position, renderer.viewport)
 	// shader := &renderer.shaders[shader_id]
 	// TODO: how do we 'bind' generic RenderGroup data to renderer-specific shader locations etc.?
+	assert(rect_width(position) > 0.0)
+	assert(rect_height(position) > 0.0)
 	render_group := Render_Group {
 		debug_name = debug_name,
 		settings = {.QuadShader},

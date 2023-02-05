@@ -224,16 +224,27 @@ transform_for_position :: proc(position, within: rectangle2) -> matrix[4,4]f32 {
 	return translation * scale
 }
 
-screen_transform_for_position :: proc(position, within: rectangle2) -> matrix[4,4]f32 {
+screen_transform_for_position :: proc(position, within: rectangle2) -> (transform: matrix[4,4]f32) {
 	pos_width := rect_width(position)
+	assert(pos_width > 0.0)
 	pos_height := rect_height(position)
+	assert(pos_height > 0.0)
 	within_width := rect_width(within)
 	within_height := rect_height(within)
 	pos_center := rect_centre(position)
 
 	scale := scale_matrix((pos_width / within_width) * (within_width / 2.0), -(pos_height / within_height) * (within_height / 2.0), 1.0)
 	translation := translation_matrix(pos_center.x, pos_center.y, 0.0)
-	return translation * scale
+	transform = translation * scale
+
+	when ODIN_DEBUG {
+		// Sanity check the screen transform
+		test_point := transform * [4]f32{0.0, 0.0, 0.0, 1.0}
+		assert(v2(test_point.xy) == pos_center)
+		assert(transform[0][0] != 0.0)
+	}
+
+	return
 }
 
 identity_matrix :: matrix[4,4]f32{
