@@ -1,3 +1,4 @@
 .vs/
 *.sln
 .idea/
+zig-cache/
