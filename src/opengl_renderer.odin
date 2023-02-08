@@ -532,6 +532,7 @@ render_gl_4_1 :: proc(renderer: ^Renderer) {
 		}
 	}
 
+	// TODO: do we really need to do this or will we lose performance doing this?
 	gl.Flush()
 }
 
