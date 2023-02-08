@@ -46,7 +46,7 @@ Render_Group :: struct {
 	uniforms: [max_uniform_data]Uniform_Data,
 	num_uniforms: int,
 	data: union {
-		[]Quad,
+		[dynamic]Quad,
 		rectangle2,
 		rectangle2s,
 		v4, // ClearColor color
@@ -61,19 +61,14 @@ push_uniform_data :: proc(render_group: ^Render_Group, uniform_data: Uniform_Dat
 }
 
 texture_as_render_group :: proc(renderer: ^Renderer, texture_name: string, debug_name: cstring, position: rectangle2, tex_transform: matrix[4,4]f32, z: f32) -> Render_Group {
-	// pos_transform := screen_transform_for_position(position, renderer.viewport)
-	// shader := &renderer.shaders[shader_id]
-	// TODO: how do we 'bind' generic RenderGroup data to renderer-specific shader locations etc.?
 	assert(rect_width(position) > 0.0)
 	assert(rect_height(position) > 0.0)
 	render_group := Render_Group {
 		debug_name = debug_name,
 		settings = {.QuadShader},
-		data = []Quad{{
-			position = position,
-		}},
 	}
-	debug_only_once(fmt.tprintf("{}.texture_as_render_group.position", debug_name), fmt.tprintf("{}", render_group.data.([]Quad)[0].position), "")
+	render_group.data = make([dynamic]Quad)
+	append(&render_group.data.([dynamic]Quad), Quad{position = position})
 	texture_id := renderer.textures[texture_name].id
 	push_uniform_data(&render_group, Uniform_Data{
 		setting = .Texture,

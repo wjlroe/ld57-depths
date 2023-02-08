@@ -501,16 +501,10 @@ render_gl_4_1 :: proc(renderer: ^Renderer) {
 				gl.ActiveTexture(u32(gl.TEXTURE0 + sampler.shader_idx))
 			}
 
-			for quad in group.data.([]Quad) {
+			for quad in group.data.([dynamic]Quad) {
 				assert(rect_width(quad.position) > 0.0)
 				assert(rect_height(quad.position) > 0.0)
 				pos_transform := screen_transform_for_position(quad.position, renderer.viewport)
-				debug_only_once(fmt.tprintf("{}.quad.position", group.debug_name), fmt.tprintf("{}", quad.position), fmt.tprintf("Frame: {}", frame_num))
-				debug_only_once(fmt.tprintf("{}.pos_transform", group.debug_name), fmt.tprintf("{}", pos_transform), fmt.tprintf("Frame: {}", frame_num))
-				// debug_only_once(fmt.tprintf("{}.pos_transform(2)", group.debug_name), fmt.tprintf("{}", pos_transform), fmt.tprintf("Frame: {}", frame_num))
-				// if pos_transform[0][0] == 0.0 {
-				// 	log.error("zero matrix!")
-				// }
 				{
 					pos_uniform, ok := shader.uniforms["pos_transform"]
 					if !ok {
