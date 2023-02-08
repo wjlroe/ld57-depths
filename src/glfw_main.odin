@@ -1,6 +1,7 @@
 package main
 
 import "core:log"
+import "core:mem"
 import "core:os"
 import "core:runtime"
 import glfw "vendor:glfw"
@@ -181,6 +182,9 @@ main :: proc() {
 	previous_frame_time := glfw.GetTime()
 
 	for (window.keep_open) {
+		if err := mem.free_all(context.temp_allocator); err != .None {
+			log.errorf("temp_allocator.free_all err == {}", err);
+        }
 		frame_time := glfw.GetTime()
 		dt := frame_time - previous_frame_time
 		previous_frame_time = frame_time
