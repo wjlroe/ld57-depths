@@ -8,6 +8,9 @@ game_title :: "Base Code"
 
 floor_tiles_image := #load("../assets/floor_tiles.png")
 runner_image := #load("../assets/runner.png")
+thunderstorm_sound := #load("../assets/thunderstorm.ogg")
+oly_shutter_sound := #load("../assets/olympus_em1_m3_125th.ogg")
+lumix_shutter_sound := #load("../assets/lumix_gx9_125th.ogg")
 
 Resource :: struct {
     file_name: string,
@@ -38,6 +41,21 @@ init_game :: proc(game: ^Game, renderer: ^Renderer) {
             file_name = "runner.png",
             data = &runner_image,
             length = size_of(runner_image),
+        },
+        "thunderstorm.ogg" = Resource {
+            file_name = "thunderstorm.ogg",
+            data = &thunderstorm_sound,
+            length = size_of(thunderstorm_sound),
+        },
+        "olympus_em1_m3_125th.ogg" = Resource {
+            file_name = "olympus_em1_m3_125th.ogg",
+            data = &oly_shutter_sound,
+            length = size_of(oly_shutter_sound),
+        },
+        "lumix_gx9_125th.ogg" = Resource {
+            file_name = "lumix_gx9_125th.ogg",
+            data = &lumix_shutter_sound,
+            length = size_of(lumix_shutter_sound),
         },
     }
 

@@ -118,9 +118,6 @@ main :: proc() {
 	init_debug_system(true)
 	defer uninit_debug_system()
 
-	init_sound_system(&sound_system)
-	defer uninit_sound_system(&sound_system)
-
 	glfw.SetErrorCallback(glfw_error_callback)
 
 	if (glfw.Init() == 0) {
@@ -176,6 +173,9 @@ main :: proc() {
 
 	init_game(&game, &window.renderer)
 	defer uninit_game(&game)
+
+	init_sound_system(&game, &sound_system)
+	defer uninit_sound_system(&sound_system)
 
 	glfw.SwapInterval(1)
 

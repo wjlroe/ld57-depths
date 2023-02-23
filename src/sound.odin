@@ -13,21 +13,47 @@ Sound_System :: struct {
 
 sound_system : Sound_System
 
-init_sound_system :: proc(sound_system: ^Sound_System) {
+init_sound_system :: proc(game: ^Game, sound_system: ^Sound_System) {
     result := miniaudio.engine_init(nil, &sound_system.engine)
+    assert(result == miniaudio.result.SUCCESS)
     if result != miniaudio.result.SUCCESS {
         log.error("Failed to initialize miniaudio engine")
         os.exit(1)
     }
 
-    miniaudio.sound_init_from_file(
-        &sound_system.engine,
-        "assets/thunderstorm.ogg",
-        0,
-        nil,
-        nil,
-        &sound_system.thunderstorm,
-    )
+    sound_decoder := new(miniaudio.decoder)
+    defer miniaudio.decoder_uninit(sound_decoder)
+    {
+        thunderstorm, ok := &game.resources["thunderstorm.ogg"]
+        assert(ok, "Cannot find thunderstorm.ogg in game resources")
+        result = miniaudio.decoder_init_memory(thunderstorm.data, len(thunderstorm.data), nil, sound_decoder)
+        assert(result == miniaudio.result.SUCCESS)
+        if result != miniaudio.result.SUCCESS {
+            log.error("Failed to decode sound: thunderstorm.ogg: ", result)
+            os.exit(1)
+        }
+        result = miniaudio.sound_init_from_data_source(
+            &sound_system.engine,
+            sound_decoder.pBackend,
+            0,
+            nil,
+            &sound_system.thunderstorm,
+        )
+        assert(result == miniaudio.result.SUCCESS)
+        if result != miniaudio.result.SUCCESS {
+            log.error("Failed to initialize sound: thunderstorm.ogg")
+            os.exit(1)
+        }
+    }
+
+    // miniaudio.sound_init_from_file(
+    //     &sound_system.engine,
+    //     "assets/thunderstorm.ogg",
+    //     0,
+    //     nil,
+    //     nil,
+    //     &sound_system.thunderstorm,
+    // )
     miniaudio.sound_init_from_file(
     	&sound_system.engine,
     	"assets/olympus_em1_m3_125th.ogg",
@@ -47,6 +73,7 @@ init_sound_system :: proc(sound_system: ^Sound_System) {
 }
 
 uninit_sound_system :: proc(sound_system: ^Sound_System) {
+    // TODO: uninit each sound?
     miniaudio.engine_uninit(&sound_system.engine)
 }
 
