@@ -89,6 +89,10 @@ build() {
         -o:minimal \
         -show-timings
 
+    # Print out dynamic library dependencies
+    (which otool > /dev/null && otool -L "${binary_file}") || true
+    (which ldd > /dev/null && ldd "${binary_file}") || true
+
     if [ "${build_all}" = all ]; then
         binary_name=base_code_release
         if [ "${odin_os}" = darwin ]; then
@@ -103,6 +107,10 @@ build() {
             -o:speed \
             -disable-assert \
             -show-timings
+
+        # Print out dynamic library dependencies
+        (which otool > /dev/null && otool -L "${binary_file}") || true
+        (which ldd > /dev/null && ldd "${binary_file}") || true
     fi
 }
 
