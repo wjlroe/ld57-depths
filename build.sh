@@ -103,14 +103,44 @@ build() {
             binary_name=base_code_release.app
         fi
         binary_file="${build_dir}/${binary_name}"
-        echo "Building release binary ${binary_file} for target ${target}"
-        $odin_cmd build src \
-            -out:"${binary_file}"\
-            -build-mode:exe \
-            -target:"${target}" \
-            -o:speed \
-            -disable-assert \
-            -show-timings
+        if [ "${odin_os}" = darwin ]; then
+            target="darwin_amd64"
+            binary_name=base_code_release_amd64
+            binary_file="${build_dir}/${binary_name}"
+            echo "Building release binary ${binary_file} for target ${target}"
+            $odin_cmd build src \
+                -out:"${binary_file}"\
+                -build-mode:exe \
+                -target:"${target}" \
+                -extra-linker-flags="-arch x86_64" \
+                -o:speed \
+                -disable-assert \
+                -show-timings
+            target="darwin_arm64"
+            binary_name=base_code_release_arm64
+            binary_file="${build_dir}/${binary_name}"
+            echo "Building release binary ${binary_file} for target ${target}"
+            $odin_cmd build src \
+                -out:"${binary_file}"\
+                -build-mode:exe \
+                -target:"${target}" \
+                -extra-linker-flags="-arch arm64" \
+                -o:speed \
+                -disable-assert \
+                -show-timings
+            binary_name=base_code_release.app
+            binary_file="${build_dir}/${binary_name}"
+            lipo -create -output "${binary_file}" "${build_dir}/base_code_release_arm64" "${build_dir}/base_code_release_amd64"
+        else
+            echo "Building release binary ${binary_file} for target ${target}"
+            $odin_cmd build src \
+                -out:"${binary_file}"\
+                -build-mode:exe \
+                -target:"${target}" \
+                -o:speed \
+                -disable-assert \
+                -show-timings
+        fi
 
         # Print out dynamic library dependencies
         (which otool > /dev/null && otool -L "${binary_file}") || true
