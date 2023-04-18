@@ -129,6 +129,8 @@ main :: proc() {
 	glfw_major, glfw_minor, glfw_rev : i32 = glfw.GetVersion()
 	log.infof("GLFW version: %d.%d.%d", glfw_major, glfw_minor, glfw_rev)
 
+	log.infof("miniaudio version: %s", miniaudio.version_string())
+
 	window, window_created := create_window_with_opengl_version()
 	if (!window_created) {
 		log.error("Creating a window failed!")
