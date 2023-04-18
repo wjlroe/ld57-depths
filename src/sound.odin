@@ -21,6 +21,15 @@ init_sound_system :: proc(game: ^Game, sound_system: ^Sound_System) {
         os.exit(1)
     }
 
+    miniaudio.sound_init_from_file(
+    	&sound_system.engine,
+    	"assets/olympus_em1_m3_125th.ogg",
+    	0,
+    	nil,
+    	nil,
+    	&sound_system.shutter,
+    )
+
     sound_decoder := new(miniaudio.decoder)
     defer miniaudio.decoder_uninit(sound_decoder)
     {
@@ -54,14 +63,6 @@ init_sound_system :: proc(game: ^Game, sound_system: ^Sound_System) {
     //     nil,
     //     &sound_system.thunderstorm,
     // )
-    miniaudio.sound_init_from_file(
-    	&sound_system.engine,
-    	"assets/olympus_em1_m3_125th.ogg",
-    	0,
-    	nil,
-    	nil,
-    	&sound_system.shutter,
-    )
     miniaudio.sound_init_from_file(
     	&sound_system.engine,
     	"assets/lumix_gx9_125th.ogg",
