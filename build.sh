@@ -78,7 +78,11 @@ build() {
     fi
     mkdir -p "${build_dir}"
 
-    binary_file="${build_dir}/base_code"
+    binary_name=base_code
+    if [ "${odin_os}" = darwin ]; then
+        binary_name=base_code.app
+    fi
+    binary_file="${build_dir}/${binary_name}"
     echo "Building debug binary ${binary_file} for target ${target}"
 
     $odin_cmd build src \
