@@ -30,12 +30,14 @@ init_sound_system :: proc(game: ^Game, sound_system: ^Sound_System) {
     	&sound_system.shutter,
     )
 
-    sound_decoder := new(miniaudio.decoder)
-    defer miniaudio.decoder_uninit(sound_decoder)
     {
+        decoder_config : miniaudio.decoder_config
+        decoder_config.encodingFormat = cast(miniaudio.encoding_format)4
+        sound_decoder := new(miniaudio.decoder)
+        defer miniaudio.decoder_uninit(sound_decoder)
         thunderstorm, ok := &game.resources["thunderstorm.ogg"]
         assert(ok, "Cannot find thunderstorm.ogg in game resources")
-        result = miniaudio.decoder_init_memory(thunderstorm.data, len(thunderstorm.data), nil, sound_decoder)
+        result = miniaudio.decoder_init_memory(thunderstorm.data, len(thunderstorm.data), &decoder_config, sound_decoder)
         assert(result == miniaudio.result.SUCCESS)
         if result != miniaudio.result.SUCCESS {
             log.error("Failed to decode sound: thunderstorm.ogg: ", result)
