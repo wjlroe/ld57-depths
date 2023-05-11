@@ -90,7 +90,6 @@ build() {
         -build-mode:exe \
         -target:"${target}" \
         -debug \
-        -o:minimal \
         -show-timings
 
     # Print out dynamic library dependencies

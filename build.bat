@@ -7,7 +7,6 @@ C:\dev\odin\dev-master\odin build src ^
     -build-mode:exe ^
     -subsystem:console ^
     -debug ^
-    -o:minimal ^
     -show-timings
 
 if NOT "%1"=="all" goto End
