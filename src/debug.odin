@@ -7,7 +7,7 @@ Debug_System :: struct {
 	print_changing_values: bool,
 }
 
-_debug_system : ^Debug_System = ---
+_debug_system : ^Debug_System
 
 init_debug_system :: proc(print_values: bool) {
 	_debug_system = new(Debug_System)

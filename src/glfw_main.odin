@@ -120,9 +120,8 @@ main :: proc() {
 	glfw.SetErrorCallback(glfw_error_callback)
 
 	if (glfw.Init() == 0) {
-		log.error("GLFW failed to init!")
 		glfw.Terminate()
-		os.exit(1)
+		die("GLFW failed to init!")
 	}
 	defer glfw.Terminate()
 
@@ -133,8 +132,7 @@ main :: proc() {
 
 	window, window_created := create_window_with_opengl_version()
 	if (!window_created) {
-		log.error("Creating a window failed!")
-		os.exit(1)
+		die("Creating a window failed!")
 	}
 	defer glfw.DestroyWindow(window.glfw_window_handle)
 	window.keep_open = true
@@ -175,7 +173,9 @@ main :: proc() {
 	init_game(&game, &window.renderer)
 	defer uninit_game(&game)
 
-	init_sound_system(&game, &sound_system)
+	if !init_sound_system(&game, &sound_system) {
+		die("Failed to initialize the sound system")
+	}
 	defer uninit_sound_system(&sound_system)
 
 	glfw.SwapInterval(1)
