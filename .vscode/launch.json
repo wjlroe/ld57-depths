@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}/build/base_code.exe",
             "cwd": "${workspaceFolder}",
             "osx": {
-                "program": "${workspaceFolder}/build/base_code"
+                "program": "${workspaceFolder}/build/base_code.app"
             },
             "linux": {
                 "program": "${workspaceFolder}/build/base_code"
