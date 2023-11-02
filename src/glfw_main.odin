@@ -119,7 +119,7 @@ main :: proc() {
 
 	glfw.SetErrorCallback(glfw_error_callback)
 
-	if (glfw.Init() == 0) {
+	if (!glfw.Init()) {
 		glfw.Terminate()
 		die("GLFW failed to init!")
 	}
