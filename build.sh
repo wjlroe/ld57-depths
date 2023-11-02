@@ -78,14 +78,17 @@ build() {
     fi
     mkdir -p "${build_dir}"
 
+    build_args=""
     binary_name=base_code
     if [ "${odin_os}" = darwin ]; then
         binary_name=base_code.app
+        build_args="${build_args} -extra-linker-flags:\"-ld_classic\""
     fi
     binary_file="${build_dir}/${binary_name}"
     echo "Building debug binary ${binary_file} for target ${target}"
 
     $odin_cmd build src \
+        ${build_args} \
         -out:"${binary_file}"\
         -build-mode:exe \
         -target:"${target}" \
