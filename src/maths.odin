@@ -1,5 +1,6 @@
 package main
 
+import "base:intrinsics"
 import "core:fmt"
 import "core:log"
 import "core:math"
@@ -210,7 +211,7 @@ ortho_matrix :: proc "contextless" (min, max: v3) -> matrix[4,4]f32 {
 		-((max.x+min.x)/(max.x-min.x)), -((max.y+min.y)/(max.y-min.y)), -((max.z+min.z)/(max.z-min.z)), 1.0,
 	}
 	// FIXME: untranspose the above
-	return transpose(ortho)
+	return intrinsics.transpose(ortho)
 }
 
 transform_for_position :: proc(position, within: rectangle2) -> matrix[4,4]f32 {
