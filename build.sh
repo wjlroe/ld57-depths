@@ -81,7 +81,6 @@ build() {
     build_args=""
     binary_name=base_code
     if [ "${odin_os}" = darwin ]; then
-        binary_name=base_code.app
         build_args="${build_args} -extra-linker-flags:\"-ld_classic\""
     fi
     binary_file="${build_dir}/${binary_name}"
@@ -130,7 +129,7 @@ build() {
                 -o:speed \
                 -disable-assert \
                 -show-timings
-            binary_name=base_code_release.app
+            binary_name=base_code_release
             binary_file="${build_dir}/${binary_name}"
             lipo -create -output "${binary_file}" "${build_dir}/base_code_release_arm64" "${build_dir}/base_code_release_amd64"
         else
