@@ -1,5 +1,6 @@
 package main
 
+import "core:fmt"
 import "core:image"
 import "core:image/png"
 import "core:log"
@@ -47,7 +48,7 @@ set_resource_as_texture :: proc(renderer: ^Renderer, name: string, resource: ^Re
 	img, err := png.load_from_bytes(resource.data^)
 	if err != nil {
 		log.error(err)
-		os.exit(1)
+		panic(fmt.tprintf("Cannot load texture data from: {}", name))
 	}
 	defer free(img)
 	if !image.is_valid_image(img) {
