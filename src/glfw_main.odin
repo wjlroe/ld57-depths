@@ -1,8 +1,8 @@
 package main
 
+import "base:runtime"
 import "core:log"
 import "core:os"
-import "core:runtime"
 import glfw "vendor:glfw"
 import miniaudio "vendor:miniaudio"
 

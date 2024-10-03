@@ -1,5 +1,6 @@
 package main
 
+import "base:runtime"
 import "core:bytes"
 import "core:fmt"
 import "core:image"
@@ -8,7 +9,6 @@ import "core:log"
 import "core:math"
 import "core:mem"
 import "core:reflect"
-import "core:runtime"
 import "core:strconv"
 import "core:strings"
 
