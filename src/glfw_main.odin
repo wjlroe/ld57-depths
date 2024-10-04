@@ -111,7 +111,7 @@ create_window_with_opengl_version :: proc() -> (window: Window, ok: bool) {
 
 game : Game
 
-main :: proc() {
+glfw_main :: proc() {
 	context = setup_context()
 
 	init_debug_system(true)
