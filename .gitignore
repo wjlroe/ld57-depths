@@ -2,3 +2,4 @@
 *.sln
 .idea/
 zig-cache/
+odin-source
