@@ -11,8 +11,7 @@ import "core:mem"
 import "core:reflect"
 import "core:strconv"
 import "core:strings"
-
-// TODO: color :: distinct v4
+import rl "vendor:raylib"
 
 float_to_int_color :: proc(color: v4) -> v4s {
 	return v4s{
@@ -23,6 +22,17 @@ float_to_int_color :: proc(color: v4) -> v4s {
 	}
 }
 
+hex_to_int :: proc(hex: string) -> (n: u8, ok: bool) {
+	number : u64
+	number, ok = strconv.parse_u64_of_base(hex, 16)
+	if number < 256 {
+		n = u8(number)
+		ok = true
+		return
+	}
+	return
+}
+
 hex_to_float :: proc(hex: string) -> f32 {
 	n, ok := strconv.parse_u64_of_base(hex, 16)
 	if ok {
@@ -31,13 +41,16 @@ hex_to_float :: proc(hex: string) -> f32 {
 	return 0.0
 }
 
-color_from_hex :: proc(hex: string) -> v4 {
-	return {
-		hex_to_float(hex[1:3]) / 255.0,
-		hex_to_float(hex[3:5]) / 255.0,
-		hex_to_float(hex[5:7]) / 255.0,
-		1.0,
-	}
+color_from_hex :: proc(hex: string) -> rl.Color {
+	r, g, b : u8
+	ok : bool
+	r, ok = hex_to_int(hex[1:3])
+	assert(ok)
+	g, ok = hex_to_int(hex[3:5])
+	assert(ok)
+	b, ok = hex_to_int(hex[5:7])
+	assert(ok)
+	return {r, g, b, 255}
 }
 
 rgb_to_hsl :: proc(rgb: v3) -> v3 {
