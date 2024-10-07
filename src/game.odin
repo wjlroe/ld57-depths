@@ -4,19 +4,7 @@ import "core:log"
 import "core:image/png"
 import "core:os"
 
-game_title :: "Base Code"
-
-floor_tiles_image := #load("../assets/floor_tiles.png")
-runner_image := #load("../assets/runner.png")
-thunderstorm_sound := #load("../assets/thunderstorm.ogg")
-oly_shutter_sound := #load("../assets/olympus_em1_m3_125th.ogg")
-lumix_shutter_sound := #load("../assets/lumix_gx9_125th.ogg")
-
-Resource :: struct {
-    file_name: string,
-    data: ^[]byte,
-    length: int,
-}
+when false {
 
 Game :: struct {
     running: bool,
@@ -24,76 +12,9 @@ Game :: struct {
     resources: map[string]Resource,
     floor_tiles_sprite: Sprite,
     runner_sprite: Sprite,
-    thunder_playing: bool,
-}
-
-init_game :: proc(game: ^Game, renderer: ^Renderer) {
-    game.running = true
-    game.renderer = renderer
-
-    game.resources = map[string]Resource{
-       "floor_tiles.png" =  Resource {
-            file_name = "floor_tiles.png",
-            data = &floor_tiles_image,
-            length = size_of(floor_tiles_image),
-        },
-        "runner.png" = Resource {
-            file_name = "runner.png",
-            data = &runner_image,
-            length = size_of(runner_image),
-        },
-        "thunderstorm.ogg" = Resource {
-            file_name = "thunderstorm.ogg",
-            data = &thunderstorm_sound,
-            length = size_of(thunderstorm_sound),
-        },
-        "olympus_em1_m3_125th.ogg" = Resource {
-            file_name = "olympus_em1_m3_125th.ogg",
-            data = &oly_shutter_sound,
-            length = size_of(oly_shutter_sound),
-        },
-        "lumix_gx9_125th.ogg" = Resource {
-            file_name = "lumix_gx9_125th.ogg",
-            data = &lumix_shutter_sound,
-            length = size_of(lumix_shutter_sound),
-        },
-    }
-
-    floor_tiles_texture := set_resource_as_texture(renderer, "floor_tiles.png", &game.resources["floor_tiles.png"])
-    runner_texture := set_resource_as_texture(renderer, "runner.png", &game.resources["runner.png"])
-
-    game.floor_tiles_sprite = Sprite {
-        debug_name = "floor_tile",
-        texture_name = "floor_tiles.png",
-        frames = []Frame{
-            Frame{
-               duration = 100.0,
-               name = "frame",
-               rect = rect_min_dim(v2s{0, 0}, v2s{64, 64}),
-            },
-        },
-        frame_dim = floor_tiles_texture.dim,
-        tex_dim = floor_tiles_texture.dim,
-        resource = &game.resources["floor_tiles.png"],
-    }
-
-    game.runner_sprite = Sprite {
-        debug_name = "runner",
-        texture_name = "runner.png",
-        tex_dim = runner_texture.dim,
-        resource = &game.resources["runner.png"],
-    }
-    split_into_frames(&game.runner_sprite, 4, 4, 0.04)
-}
-
-uninit_game :: proc(game: ^Game) {
 }
 
 render_game :: proc(game: ^Game) {
-    {
-        clear_window := clear_render_group(color_blue)
-        push_render_group(game.renderer, clear_window)
-    }
     z : f32 = -0.9
     {
         tile_size := game.floor_tiles_sprite.frame_dim.x * 2
@@ -119,6 +40,4 @@ render_game :: proc(game: ^Game) {
     }
 }
 
-update_game :: proc(game: ^Game, dt: f64) {
-    update_sprite(&game.runner_sprite, dt)
 }

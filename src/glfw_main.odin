@@ -3,19 +3,8 @@ package main
 import "base:runtime"
 import "core:log"
 import "core:os"
-import glfw "vendor:glfw"
-import miniaudio "vendor:miniaudio"
 
-setup_context :: proc() -> runtime.Context {
-	c := runtime.default_context()
-	lowest_level := log.Level.Info
-	when ODIN_DEBUG {
-		lowest_level = log.Level.Debug
-	}
-	c.logger = log.create_console_logger(lowest = lowest_level)
-	return c
-}
-
+when false {
 glfw_error_callback :: proc "c" (error_code: i32, error_description: cstring) {
 	context = setup_context()
 	log.errorf("error (code: %d): %s", error_code, error_description)
@@ -170,8 +159,8 @@ glfw_main :: proc() {
 	activate_gl_4_1(&window.renderer)
 	window.renderer->impl_setup(glfw.gl_set_proc_address)
 
-	init_game(&game, &window.renderer)
-	defer uninit_game(&game)
+	// init_game(&game, &window.renderer)
+	// defer uninit_game(&game)
 
 	if !init_sound_system(&game, &sound_system) {
 		die("Failed to initialize the sound system")
@@ -190,8 +179,8 @@ glfw_main :: proc() {
 		dt := frame_time - previous_frame_time
 		previous_frame_time = frame_time
 
-		update_game(&game, dt)
-		render_game(&game)
+		// update_game(&game, dt)
+		// render_game(&game)
 		window.renderer->impl_render()
 		glfw.SwapBuffers(window.glfw_window_handle)
 		glfw.PollEvents()
@@ -203,4 +192,5 @@ glfw_main :: proc() {
 	}
 
 	log.info("Done")
+}
 }

@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:log"
 import "core:math"
 import "core:strings"
+import rl "vendor:raylib"
 
 // Integer vectors
 v2s :: distinct [2]int
@@ -63,7 +64,16 @@ rectangle2 :: struct {
 	max: v2,
 }
 
-rect_min_dim :: proc{rect_min_dim_v2s, rect_min_dim_v2}
+rect_min_dim :: proc(min, dim: rl.Vector2) -> rl.Rectangle {
+	return rl.Rectangle{
+		min.x,
+		min.y,
+		dim.x,
+		dim.y,
+	}
+}
+
+// rect_min_dim :: proc{rect_min_dim_v2s, rect_min_dim_v2}
 
 rect_min_dim_v2s :: proc "contextless" (min, dim: v2s) -> rectangle2s {
 	rect : rectangle2s = ---

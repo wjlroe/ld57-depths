@@ -1,7 +1,6 @@
 package main
 
 import "core:fmt"
-import miniaudio "vendor:miniaudio"
 
 Sound_Id :: enum {
     Thunderstorm,
@@ -9,6 +8,7 @@ Sound_Id :: enum {
     Shutter_GX9,
 }
 
+when false {
 Sound :: struct {
     id: Sound_Id,
     resource_name: string,
@@ -25,12 +25,11 @@ Sound_System :: struct {
 sound_system : Sound_System
 
 init_sound_from_resources :: proc(sound: ^Sound) -> (ok: bool) {
-    result : miniaudio.result
     // decoder_config : miniaudio.decoder_config
     // decoder_config.encodingFormat = cast(miniaudio.encoding_format)4
     sound.sound = new(miniaudio.sound)
     sound.decoder = new(miniaudio.decoder)
-    resource, res_ok := &game.resources[sound.resource_name]
+    resource, res_ok := &game_window.resources[sound.resource_name]
     if !res_ok {
         fail(fmt.tprintf("Cannot find %s in game resources", sound.resource_name))
         return
@@ -116,4 +115,6 @@ play_sound :: proc(sound_system: ^Sound_System, which_sound: Sound_Id, loop: boo
 pause_sound :: proc(sound_system: ^Sound_System, which_sound: Sound_Id) {
 	sound := sound_system.sounds[which_sound].sound
 	miniaudio.sound_stop(sound)
+}
+
 }
