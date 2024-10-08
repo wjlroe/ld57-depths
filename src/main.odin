@@ -203,6 +203,10 @@ process_input :: proc() {
     // TODO: press 't' to play/pause the thunder sound file
     // TODO: mouse click left (without modifiers) -> play shutter sound
     // TODO: mouse click right (without modifiers) -> play GX9 shutter sound
+
+    if rl.WindowShouldClose() {
+        game_window.quit = true
+    }
 }
 
 main :: proc() {
