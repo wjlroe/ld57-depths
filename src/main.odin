@@ -1,8 +1,10 @@
 package main
 
 import "base:runtime"
+import "core:path/filepath"
 import "core:log"
 import "core:os"
+import "core:strings"
 import rl "vendor:raylib"
 
 game_title :: "Base Code"
@@ -23,17 +25,16 @@ Resource_Type :: enum {
 
 Resource :: struct {
     type: Resource_Type,
-    file_name: string,
-    file_extension: cstring,
+    filename: string,
     data: ^[]byte,
-    length: int,
     rl_data: union { rl.Texture2D, rl.Sound },
 }
 
 load_image_resource :: proc(resource: ^Resource) -> (ok: bool) {
-    image := rl.LoadImageFromMemory(resource.file_extension, resource.data, i32(resource.length))
+    extension := strings.clone_to_cstring(filepath.ext(resource.filename), context.temp_allocator)
+    image := rl.LoadImageFromMemory(extension, &resource.data[0], i32(len(resource.data)))
     if !rl.IsImageReady(image) {
-        log.errorf("Image is not ready: {}", resource.file_name)
+        log.errorf("Image is not ready: {}", resource.filename)
         assert(false)
         return
     }
@@ -43,13 +44,21 @@ load_image_resource :: proc(resource: ^Resource) -> (ok: bool) {
 }
 
 load_sound_resource :: proc(resource: ^Resource) -> (ok: bool) {
-    wave := rl.LoadWaveFromMemory(resource.file_extension, resource.data, i32(resource.length))
+    extension := strings.clone_to_cstring(filepath.ext(resource.filename), context.temp_allocator)
+    wave := rl.LoadWaveFromMemory(extension, &resource.data[0], i32(len(resource.data)))
     if !rl.IsWaveReady(wave) {
-        log.errorf("Sound is not ready: {}", resource.file_name)
+        log.errorf("Wave is not ready: {}", resource.filename)
         assert(false)
         return
     }
-    resource.rl_data = rl.LoadSoundFromWave(wave)
+    sound := rl.LoadSoundFromWave(wave)
+    // TODO: rl.UnloadWave(wave)?
+    if !rl.IsSoundReady(sound) {
+        log.errorf("Sound is not ready: {}", resource.filename)
+        assert(false)
+        return
+    }
+    resource.rl_data = sound
     ok = true
     return
 }
@@ -119,38 +128,28 @@ init_game :: proc() -> bool {
     game_window.resources = map[string]Resource{
        "floor_tiles.png" =  Resource {
             type = .RESOURCE_IMAGE,
-            file_name = "floor_tiles.png",
-            file_extension = ".png",
+            filename = "floor_tiles.png",
             data = &floor_tiles_image,
-            length = len(floor_tiles_image),
         },
         "runner.png" = Resource {
             type = .RESOURCE_IMAGE,
-            file_name = "runner.png",
-            file_extension = ".png",
+            filename = "runner.png",
             data = &runner_image,
-            length = len(runner_image),
         },
         "thunderstorm.ogg" = Resource {
             type = .RESOURCE_SOUND,
-            file_name = "thunderstorm.ogg",
-            file_extension = ".ogg",
+            filename = "thunderstorm.ogg",
             data = &thunderstorm_sound,
-            length = len(thunderstorm_sound),
         },
         "olympus_em1_m3_125th.ogg" = Resource {
             type = .RESOURCE_SOUND,
-            file_name = "olympus_em1_m3_125th.ogg",
-            file_extension = ".ogg",
+            filename = "olympus_em1_m3_125th.ogg",
             data = &oly_shutter_sound,
-            length = len(oly_shutter_sound),
         },
         "lumix_gx9_125th.ogg" = Resource {
             type = .RESOURCE_SOUND,
-            file_name = "lumix_gx9_125th.ogg",
-            file_extension = ".ogg",
+            filename = "lumix_gx9_125th.ogg",
             data = &lumix_shutter_sound,
-            length = len(lumix_shutter_sound),
         },
     }
 
@@ -212,6 +211,7 @@ main :: proc() {
     init_debug_system(true)
     defer uninit_debug_system()
 
+    rl.InitAudioDevice()
     rl.InitWindow(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT,  game_title)
     rl.SetExitKey(rl.KeyboardKey.KEY_NULL)
 
@@ -234,5 +234,6 @@ main :: proc() {
         update_and_render(dt)
     }
 
+    rl.CloseAudioDevice()
     rl.CloseWindow()
 }
