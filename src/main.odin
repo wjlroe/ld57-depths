@@ -174,6 +174,7 @@ init_game :: proc() -> bool {
         frame_dim = floor_texture_dim,
         resource = &game_window.resources["floor_tiles.png"],
     }
+    split_into_frames(&game_window.floor_tiles_sprite, 1, 1, 0.0)
 
     runner_texture_dim := dim_from_texture(game_window.resources["runner.png"].rl_data.(rl.Texture2D))
     game_window.runner_sprite = Sprite {
@@ -195,6 +196,21 @@ update_and_render :: proc(dt: f32) {
         tile_size := f32(game_window.floor_tiles_sprite.frame_dim.x * 2)
         dest := rl.Rectangle{100.0, 100.0, tile_size, tile_size}
         draw_sprite(&game_window.floor_tiles_sprite, dest, rl.WHITE)
+    }
+    {
+        tile_size := f32(game_window.floor_tiles_sprite.frame_dim.x * 2)
+        dest := rl.Rectangle{400.0, 350.0, tile_size, tile_size}
+        draw_sprite(&game_window.floor_tiles_sprite, dest, rl.WHITE)
+    }
+    {
+        runner_size := f32(game_window.runner_sprite.frame_dim.x * 2)
+        dest := rl.Rectangle{450.0, 500.0, runner_size, runner_size}
+        draw_sprite(&game_window.runner_sprite, dest, rl.WHITE)
+    }
+    {
+        runner_size := f32(game_window.runner_sprite.frame_dim.x * 2)
+        dest := rl.Rectangle{750.0, 500.0, runner_size, runner_size}
+        draw_sprite(&game_window.runner_sprite, dest, rl.WHITE)
     }
     rl.EndDrawing()
 }
