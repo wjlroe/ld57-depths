@@ -4,6 +4,7 @@ import "base:runtime"
 import "core:path/filepath"
 import "core:log"
 import "core:os"
+import "core:strconv"
 import "core:strings"
 import rl "vendor:raylib"
 
@@ -16,6 +17,48 @@ runner_image := #load("../assets/runner.png")
 thunderstorm_sound := #load("../assets/thunderstorm.ogg")
 oly_shutter_sound := #load("../assets/olympus_em1_m3_125th.ogg")
 lumix_shutter_sound := #load("../assets/lumix_gx9_125th.ogg")
+
+rect_min_dim :: proc(min, dim: rl.Vector2) -> rl.Rectangle {
+    return rl.Rectangle{
+        min.x,
+        min.y,
+        dim.x,
+        dim.y,
+    }
+}
+
+hex_to_int :: proc(hex: string) -> (n: u8, ok: bool) {
+    number : u64
+    number, ok = strconv.parse_u64_of_base(hex, 16)
+    if number < 256 {
+        n = u8(number)
+        ok = true
+        return
+    }
+    return
+}
+
+color_from_hex :: proc(hex: string) -> rl.Color {
+    r, g, b : u8
+    ok : bool
+    r, ok = hex_to_int(hex[1:3])
+    assert(ok)
+    g, ok = hex_to_int(hex[3:5])
+    assert(ok)
+    b, ok = hex_to_int(hex[5:7])
+    assert(ok)
+    return {r, g, b, 255}
+}
+
+color_red := color_from_hex("#ff0000")
+color_green := color_from_hex("#00ff00")
+color_blue := color_from_hex("#0000ff")
+color_black := color_from_hex("#000000")
+color_grey := color_from_hex("#ededed")
+color_pink := color_from_hex("#ec39c6")
+color_navy := color_from_hex("#3636cc")
+color_gold := color_from_hex("#ffd700")
+color_yellow := color_from_hex("#ffff00")
 
 Resource_Type :: enum {
     RESOURCE_NONE,
@@ -91,6 +134,60 @@ Font :: struct {
     size: f32,
 }
 
+Frame :: struct {
+    duration: f32,
+    name: string,
+    rect: rl.Rectangle,
+    coords: rl.Vector2,
+}
+
+// TODO: parse sprite JSON from aseprite
+Sprite :: struct {
+    debug_name: cstring,
+    texture_name: string,
+    frames: []Frame,
+    num_frames: int,
+    current_frame: int,
+    frame_time: f32,
+    frame_dim: rl.Vector2,
+    resource: ^Resource,
+}
+
+draw_sprite :: proc(sprite: ^Sprite, destination: rl.Rectangle, tint: rl.Color) {
+    current_frame := sprite.frames[sprite.current_frame]
+    origin := rl.Vector2{}
+    rotation : f32 = 0.0
+    rl.DrawTexturePro(sprite.resource.rl_data.(rl.Texture2D), current_frame.rect, destination, origin, rotation, tint)
+}
+
+split_into_frames :: proc(sprite: ^Sprite, num_x: int, num_y: int, duration: f32) {
+    texture := sprite.resource.rl_data.(rl.Texture2D)
+    sprite.frame_dim.x = f32(texture.width) / f32(num_x)
+    sprite.frame_dim.y = f32(texture.height) / f32(num_y)
+    sprite.num_frames = num_x * num_y
+    sprite.frames = make([]Frame, sprite.num_frames)
+    for y in 0..<num_y {
+        for x in 0..<num_x {
+            idx := num_y * y + x
+            sprite.frames[idx].duration = duration
+            sprite.frames[idx].rect = rect_min_dim(rl.Vector2{f32(x) * sprite.frame_dim.x, f32(y) * sprite.frame_dim.y}, sprite.frame_dim)
+            sprite.frames[idx].coords = rl.Vector2{f32(x), f32(y)}
+        }
+    }
+}
+
+update_sprite :: proc(sprite: ^Sprite, dt: f32) {
+    current_frame := sprite.frames[sprite.current_frame]
+    new_time := sprite.frame_time + dt
+    if new_time > current_frame.duration {
+        overflow := new_time - current_frame.duration
+        sprite.current_frame = (sprite.current_frame + 1) % sprite.num_frames
+        sprite.frame_time = overflow
+    } else {
+        sprite.frame_time = new_time
+    }
+}
+
 Game_State :: enum {
     STATE_TITLE,
 }
@@ -159,6 +256,12 @@ init_game :: proc() -> bool {
             assert(false)
         }
     }
+    {
+        // Play+pause thunderstorm so that it can be resumed and paused later
+        thunderstorm := game_window.resources["thunderstorm.ogg"].rl_data.(rl.Sound)
+        rl.PlaySound(thunderstorm)
+        rl.PauseSound(thunderstorm)
+    }
 
     floor_texture_dim := dim_from_texture(game_window.resources["floor_tiles.png"].rl_data.(rl.Texture2D))
     game_window.floor_tiles_sprite = Sprite {
@@ -216,9 +319,24 @@ update_and_render :: proc(dt: f32) {
 }
 
 process_input :: proc() {
-    // TODO: press 't' to play/pause the thunder sound file
-    // TODO: mouse click left (without modifiers) -> play shutter sound
-    // TODO: mouse click right (without modifiers) -> play GX9 shutter sound
+    if rl.GetCharPressed() == 't' {
+        thunderstorm := game_window.resources["thunderstorm.ogg"].rl_data.(rl.Sound)
+        if game_window.thunder_playing {
+            // pause
+            rl.PauseSound(thunderstorm)
+            game_window.thunder_playing = false
+        } else {
+            // play
+            rl.ResumeSound(thunderstorm)
+            game_window.thunder_playing = true
+        }
+    }
+    if rl.IsMouseButtonPressed(.LEFT) {
+        rl.PlaySound(game_window.resources["olympus_em1_m3_125th.ogg"].rl_data.(rl.Sound))
+    }
+    if rl.IsMouseButtonPressed(.RIGHT) {
+        rl.PlaySound(game_window.resources["lumix_gx9_125th.ogg"].rl_data.(rl.Sound))
+    }
 
     if rl.WindowShouldClose() {
         game_window.quit = true
