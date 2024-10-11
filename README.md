@@ -5,7 +5,7 @@ work-in-progress, not usable by anyone else yet.
 
 ## TODO:
 
-- [ ] Title screen
+- [x] Title screen
 - [ ] Menu screen
 - [ ] Load a level from LDtk
 - [ ] Load 3D object model (fast obj read?)

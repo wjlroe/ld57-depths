@@ -17,6 +17,7 @@ runner_image := #load("../assets/runner.png")
 thunderstorm_sound := #load("../assets/thunderstorm.ogg")
 oly_shutter_sound := #load("../assets/olympus_em1_m3_125th.ogg")
 lumix_shutter_sound := #load("../assets/lumix_gx9_125th.ogg")
+neuton_regular := #load("../assets/fonts/neuton/Neuton-Regular.ttf")
 
 rect_min_dim :: proc(min, dim: rl.Vector2) -> rl.Rectangle {
     return rl.Rectangle{
@@ -64,13 +65,14 @@ Resource_Type :: enum {
     RESOURCE_NONE,
     RESOURCE_SOUND,
     RESOURCE_IMAGE,
+    RESOURCE_FONT,
 }
 
 Resource :: struct {
     type: Resource_Type,
     filename: string,
     data: ^[]byte,
-    rl_data: union { rl.Texture2D, rl.Sound },
+    rl_data: union { rl.Texture2D, rl.Sound, Font },
 }
 
 load_image_resource :: proc(resource: ^Resource) -> (ok: bool) {
@@ -106,10 +108,20 @@ load_sound_resource :: proc(resource: ^Resource) -> (ok: bool) {
     return
 }
 
+load_font_resource :: proc(resource: ^Resource) -> (ok: bool) {
+    font := &resource.rl_data.(Font)
+    extension := strings.clone_to_cstring(filepath.ext(resource.filename), context.temp_allocator)
+    font.font = rl.LoadFontFromMemory(extension, &resource.data[0], i32(len(resource.data)), i32(font.size), nil, -1)
+    assert(rl.IsFontReady(font.font))
+    ok = true
+    return
+}
+
 load_resource :: proc(resource: ^Resource) -> bool {
     #partial switch resource.type {
         case .RESOURCE_IMAGE: return load_image_resource(resource)
         case .RESOURCE_SOUND: return load_sound_resource(resource)
+        case .RESOURCE_FONT:  return load_font_resource(resource)
     }
     log.errorf("Unknown resource type")
     return false
@@ -250,6 +262,12 @@ init_game :: proc() -> bool {
             filename = "lumix_gx9_125th.ogg",
             data = &lumix_shutter_sound,
         },
+        "title_font" = Resource {
+            type = .RESOURCE_FONT,
+            filename = "Neuton-Regular.ttf",
+            data = &neuton_regular,
+            rl_data = Font { size = 320.0 },
+        },
     }
 
     for resource_key in game_window.resources {
@@ -290,6 +308,19 @@ init_game :: proc() -> bool {
     split_into_frames(&game_window.runner_sprite, 4, 4, 0.04)
 
     return true
+}
+
+title_screen :: proc(dt: f32) {
+    rl.BeginDrawing()
+    defer rl.EndDrawing()
+    rl.ClearBackground(color_navy)
+    title_font := game_window.resources["title_font"].rl_data.(Font)
+    text_size := rl.MeasureTextEx(title_font.font, game_title, title_font.size, 0.0)
+    pos := rl.Vector2{
+        game_window.dim.x / 2.0 - text_size.x / 2.0,
+        game_window.dim.y / 2.0 - text_size.y / 2.0,
+    }
+    rl.DrawTextEx(title_font.font, game_title, pos, title_font.size, 0.0, color_gold)
 }
 
 level_screen :: proc(dt: f32) {
@@ -345,7 +376,10 @@ update_and_render :: proc(dt: f32) {
     }
 
     // TODO: switch between title screen and level screen
-    level_screen(dt)
+    #partial switch game_window.game_state {
+        case .STATE_TITLE: title_screen(dt)
+        case .STATE_LEVEL: level_screen(dt)
+    }
 }
 
 main :: proc() {
