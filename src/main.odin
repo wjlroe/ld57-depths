@@ -95,12 +95,12 @@ load_sound_resource :: proc(resource: ^Resource) -> (ok: bool) {
         return
     }
     sound := rl.LoadSoundFromWave(wave)
-    // TODO: rl.UnloadWave(wave)?
     if !rl.IsSoundReady(sound) {
         log.errorf("Sound is not ready: {}", resource.filename)
         assert(false)
         return
     }
+    rl.UnloadWave(wave)
     resource.rl_data = sound
     ok = true
     return
