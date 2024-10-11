@@ -311,6 +311,10 @@ init_game :: proc() -> bool {
 }
 
 title_screen :: proc(dt: f32) {
+    if rl.IsKeyPressed(.ENTER) {
+        game_window.game_state = .STATE_LEVEL
+    }
+
     rl.BeginDrawing()
     defer rl.EndDrawing()
     rl.ClearBackground(color_navy)
