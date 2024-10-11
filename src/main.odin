@@ -190,6 +190,8 @@ update_sprite :: proc(sprite: ^Sprite, dt: f32) {
 
 Game_State :: enum {
     STATE_TITLE,
+    STATE_MENU,
+    STATE_LEVEL,
 }
 
 Game_Window :: struct {
@@ -290,10 +292,30 @@ init_game :: proc() -> bool {
     return true
 }
 
-update_and_render :: proc(dt: f32) {
+level_screen :: proc(dt: f32) {
+    if rl.GetCharPressed() == 't' {
+        thunderstorm := game_window.resources["thunderstorm.ogg"].rl_data.(rl.Sound)
+        if game_window.thunder_playing {
+            // pause
+            rl.PauseSound(thunderstorm)
+            game_window.thunder_playing = false
+        } else {
+            // play
+            rl.ResumeSound(thunderstorm)
+            game_window.thunder_playing = true
+        }
+    }
+    if rl.IsMouseButtonPressed(.LEFT) {
+        rl.PlaySound(game_window.resources["olympus_em1_m3_125th.ogg"].rl_data.(rl.Sound))
+    }
+    if rl.IsMouseButtonPressed(.RIGHT) {
+        rl.PlaySound(game_window.resources["lumix_gx9_125th.ogg"].rl_data.(rl.Sound))
+    }
+
     update_sprite(&game_window.runner_sprite, dt)
 
     rl.BeginDrawing()
+    defer rl.EndDrawing()
     rl.ClearBackground(color_blue)
     {
         tile_size := f32(game_window.floor_tiles_sprite.frame_dim.x * 2)
@@ -315,32 +337,15 @@ update_and_render :: proc(dt: f32) {
         dest := rl.Rectangle{750.0, 500.0, runner_size, runner_size}
         draw_sprite(&game_window.runner_sprite, dest, rl.WHITE)
     }
-    rl.EndDrawing()
 }
 
-process_input :: proc() {
-    if rl.GetCharPressed() == 't' {
-        thunderstorm := game_window.resources["thunderstorm.ogg"].rl_data.(rl.Sound)
-        if game_window.thunder_playing {
-            // pause
-            rl.PauseSound(thunderstorm)
-            game_window.thunder_playing = false
-        } else {
-            // play
-            rl.ResumeSound(thunderstorm)
-            game_window.thunder_playing = true
-        }
-    }
-    if rl.IsMouseButtonPressed(.LEFT) {
-        rl.PlaySound(game_window.resources["olympus_em1_m3_125th.ogg"].rl_data.(rl.Sound))
-    }
-    if rl.IsMouseButtonPressed(.RIGHT) {
-        rl.PlaySound(game_window.resources["lumix_gx9_125th.ogg"].rl_data.(rl.Sound))
-    }
-
+update_and_render :: proc(dt: f32) {
     if rl.WindowShouldClose() {
         game_window.quit = true
     }
+
+    // TODO: switch between title screen and level screen
+    level_screen(dt)
 }
 
 main :: proc() {
@@ -368,7 +373,6 @@ main :: proc() {
         }
 
         dt := rl.GetFrameTime()
-        process_input()
         update_and_render(dt)
     }
 
