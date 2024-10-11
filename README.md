@@ -3,6 +3,14 @@
 This is the base codebase for my attempts at Ludum Dare (in Odin). It is a
 work-in-progress, not usable by anyone else yet.
 
+## TODO:
+
+- [ ] Title screen
+- [ ] Menu screen
+- [ ] Load a level from LDtk
+- [ ] Load 3D object model (fast obj read?)
+- [ ] Render 3D mesh/object
+
 ## Setup
 
 ### Windows
