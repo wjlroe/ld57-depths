@@ -4,6 +4,7 @@ import "base:runtime"
 import "core:path/filepath"
 import "core:log"
 import "core:os"
+import "core:container/small_array"
 import "core:strconv"
 import "core:strings"
 import rl "vendor:raylib"
@@ -217,6 +218,8 @@ Game_Window :: struct {
     runner_sprite: Sprite,
     thunder_playing: bool,
 
+    menu: Menu,
+
     debug_font: Font,
 
     dim: rl.Vector2,
@@ -235,6 +238,7 @@ update_window_dim :: proc() {
 
 init_game :: proc() -> bool {
     update_window_dim()
+    setup_main_menu()
 
     game_window.resources = map[string]Resource{
        "floor_tiles.png" =  Resource {
@@ -267,6 +271,12 @@ init_game :: proc() -> bool {
             filename = "Neuton-Regular.ttf",
             data = &neuton_regular,
             rl_data = Font { size = 320.0 },
+        },
+        "menu_font" = Resource {
+            type = .RESOURCE_FONT,
+            filename = "Neuton-Regular.ttf",
+            data = &neuton_regular,
+            rl_data = Font { size = 80.0 },
         },
     }
 
@@ -312,7 +322,7 @@ init_game :: proc() -> bool {
 
 title_screen :: proc(dt: f32) {
     if rl.IsKeyPressed(.ENTER) {
-        game_window.game_state = .STATE_LEVEL
+        goto_main_menu()
     }
 
     rl.BeginDrawing()
@@ -325,6 +335,82 @@ title_screen :: proc(dt: f32) {
         game_window.dim.y / 2.0 - text_size.y / 2.0,
     }
     rl.DrawTextEx(title_font.font, game_title, pos, title_font.size, 0.0, color_gold)
+}
+
+MAX_MENU_ITEMS :: 16
+
+Action :: enum {
+    NONE,
+    NEW_GAME,
+    QUIT,
+}
+
+Menu_Item :: struct {
+    label: cstring,
+    action: Action,
+}
+
+Menu :: struct {
+    items: small_array.Small_Array(MAX_MENU_ITEMS, Menu_Item),
+    focussed_index: int,
+}
+
+global_main_menu := Menu{}
+
+setup_main_menu :: proc() {
+    using global_main_menu
+    small_array.push_back(&items, Menu_Item{"New Game", .NEW_GAME})
+    small_array.push_back(&items, Menu_Item{"Quit", .QUIT})
+}
+
+goto_main_menu :: proc() {
+    game_window.menu = global_main_menu
+    game_window.game_state = .STATE_MENU
+}
+
+goto_new_game :: proc() {
+    game_window.game_state = .STATE_LEVEL
+}
+
+menu_screen :: proc(dt: f32) {
+    if rl.IsKeyPressed(.ENTER) {
+        item := small_array.get_ptr(&game_window.menu.items, game_window.menu.focussed_index)
+        #partial switch item.action {
+            case .QUIT: game_window.quit = true
+            case .NEW_GAME: goto_new_game()
+        }
+    } else if rl.IsKeyPressed(.DOWN) {
+        game_window.menu.focussed_index = (game_window.menu.focussed_index + 1) % small_array.len(game_window.menu.items)
+    } else if rl.IsKeyPressed(.UP) {
+        if game_window.menu.focussed_index == 0 {
+            game_window.menu.focussed_index = small_array.len(game_window.menu.items) - 1
+        } else {
+            game_window.menu.focussed_index = (game_window.menu.focussed_index - 1) % small_array.len(game_window.menu.items)
+        }
+    }
+
+    rl.BeginDrawing()
+    defer rl.EndDrawing()
+    rl.ClearBackground(color_navy)
+    menu_font := game_window.resources["menu_font"].rl_data.(Font)
+    total_size : rl.Vector2
+    for item in small_array.slice(&game_window.menu.items) {
+        item_size := rl.MeasureTextEx(menu_font.font, item.label, menu_font.size, 0.0)
+        total_size.x = max(total_size.x, item_size.x)
+        total_size.y += item_size.y
+    }
+    pos := rl.Vector2{
+        game_window.dim.x / 2.0 - total_size.x / 2.0,
+        game_window.dim.y / 2.0 - total_size.y / 2.0,
+    }
+    for item, idx in small_array.slice(&game_window.menu.items) {
+        if idx == game_window.menu.focussed_index {
+            // TODO: render something to indicate this is active
+        }
+        rl.DrawTextEx(menu_font.font, item.label, pos, menu_font.size, 0.0, color_gold)
+        item_size := rl.MeasureTextEx(menu_font.font, item.label, menu_font.size, 0.0)
+        pos.y += item_size.y
+    }
 }
 
 level_screen :: proc(dt: f32) {
@@ -383,6 +469,7 @@ update_and_render :: proc(dt: f32) {
     #partial switch game_window.game_state {
         case .STATE_TITLE: title_screen(dt)
         case .STATE_LEVEL: level_screen(dt)
+        case .STATE_MENU:  menu_screen(dt)
     }
 }
 
