@@ -19,6 +19,7 @@ thunderstorm_sound := #load("../assets/thunderstorm.ogg")
 oly_shutter_sound := #load("../assets/olympus_em1_m3_125th.ogg")
 lumix_shutter_sound := #load("../assets/lumix_gx9_125th.ogg")
 neuton_regular := #load("../assets/fonts/neuton/Neuton-Regular.ttf")
+liberation_serif_regular := #load("../assets/fonts/liberation_serif/LiberationSerif-Regular.ttf")
 
 rect_min_dim :: proc(min, dim: rl.Vector2) -> rl.Rectangle {
     return rl.Rectangle{
@@ -268,13 +269,13 @@ init_game :: proc() -> bool {
     game_window.resources["title_font"] = Resource {
         type = .RESOURCE_FONT,
         filename = "Neuton-Regular.ttf",
-        data = &neuton_regular,
-        rl_data = Font { size = 320.0 },
+        data = &liberation_serif_regular,
+        rl_data = Font { size = 220.0 },
     }
     game_window.resources["menu_font"] = Resource {
         type = .RESOURCE_FONT,
         filename = "Neuton-Regular.ttf",
-        data = &neuton_regular,
+        data = &liberation_serif_regular,
         rl_data = Font { size = 80.0 },
     }
 
@@ -389,6 +390,7 @@ menu_screen :: proc(dt: f32) {
 
     rl.BeginDrawing()
     defer rl.EndDrawing()
+
     rl.ClearBackground(color_navy)
     menu_font := game_window.resources["menu_font"].rl_data.(Font)
     total_size : rl.Vector2
@@ -402,11 +404,14 @@ menu_screen :: proc(dt: f32) {
         game_window.dim.y / 2.0 - total_size.y / 2.0,
     }
     for item, idx in small_array.slice(&game_window.menu.items) {
-        if idx == game_window.menu.focussed_index {
-            // TODO: render something to indicate this is active
-        }
         rl.DrawTextEx(menu_font.font, item.label, pos, menu_font.size, 0.0, color_gold)
         item_size := rl.MeasureTextEx(menu_font.font, item.label, menu_font.size, 0.0)
+        if idx == game_window.menu.focussed_index {
+            circle_pos := pos
+            circle_pos.y += item_size.y / 2.0
+            circle_pos.x -= 20.0
+            rl.DrawCircleV(circle_pos, 10.0, color_gold)
+        }
         pos.y += item_size.y
     }
 }
