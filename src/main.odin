@@ -240,44 +240,42 @@ init_game :: proc() -> bool {
     update_window_dim()
     setup_main_menu()
 
-    game_window.resources = map[string]Resource{
-       "floor_tiles.png" =  Resource {
-            type = .RESOURCE_IMAGE,
-            filename = "floor_tiles.png",
-            data = &floor_tiles_image,
-        },
-        "runner.png" = Resource {
-            type = .RESOURCE_IMAGE,
-            filename = "runner.png",
-            data = &runner_image,
-        },
-        "thunderstorm.ogg" = Resource {
-            type = .RESOURCE_SOUND,
-            filename = "thunderstorm.ogg",
-            data = &thunderstorm_sound,
-        },
-        "olympus_em1_m3_125th.ogg" = Resource {
-            type = .RESOURCE_SOUND,
-            filename = "olympus_em1_m3_125th.ogg",
-            data = &oly_shutter_sound,
-        },
-        "lumix_gx9_125th.ogg" = Resource {
-            type = .RESOURCE_SOUND,
-            filename = "lumix_gx9_125th.ogg",
-            data = &lumix_shutter_sound,
-        },
-        "title_font" = Resource {
-            type = .RESOURCE_FONT,
-            filename = "Neuton-Regular.ttf",
-            data = &neuton_regular,
-            rl_data = Font { size = 320.0 },
-        },
-        "menu_font" = Resource {
-            type = .RESOURCE_FONT,
-            filename = "Neuton-Regular.ttf",
-            data = &neuton_regular,
-            rl_data = Font { size = 80.0 },
-        },
+   game_window.resources["floor_tiles.png"] = Resource {
+        type = .RESOURCE_IMAGE,
+        filename = "floor_tiles.png",
+        data = &floor_tiles_image,
+    }
+    game_window.resources["runner.png"] = Resource {
+        type = .RESOURCE_IMAGE,
+        filename = "runner.png",
+        data = &runner_image,
+    }
+    game_window.resources["thunderstorm.ogg"] = Resource {
+        type = .RESOURCE_SOUND,
+        filename = "thunderstorm.ogg",
+        data = &thunderstorm_sound,
+    }
+    game_window.resources["olympus_em1_m3_125th.ogg"] = Resource {
+        type = .RESOURCE_SOUND,
+        filename = "olympus_em1_m3_125th.ogg",
+        data = &oly_shutter_sound,
+    }
+    game_window.resources["lumix_gx9_125th.ogg"] = Resource {
+        type = .RESOURCE_SOUND,
+        filename = "lumix_gx9_125th.ogg",
+        data = &lumix_shutter_sound,
+    }
+    game_window.resources["title_font"] = Resource {
+        type = .RESOURCE_FONT,
+        filename = "Neuton-Regular.ttf",
+        data = &neuton_regular,
+        rl_data = Font { size = 320.0 },
+    }
+    game_window.resources["menu_font"] = Resource {
+        type = .RESOURCE_FONT,
+        filename = "Neuton-Regular.ttf",
+        data = &neuton_regular,
+        rl_data = Font { size = 80.0 },
     }
 
     for resource_key in game_window.resources {
