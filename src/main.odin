@@ -4,6 +4,7 @@ import "base:runtime"
 import "core:path/filepath"
 import "core:log"
 import "core:os"
+import "core:slice"
 import "core:container/small_array"
 import "core:strconv"
 import "core:strings"
@@ -13,13 +14,17 @@ game_title :: "Depths"
 DEFAULT_WINDOW_WIDTH  :: 1280
 DEFAULT_WINDOW_HEIGHT :: 800
 
-floor_tiles_image := #load("../assets/floor_tiles.png")
-runner_image := #load("../assets/runner.png")
-thunderstorm_sound := #load("../assets/thunderstorm.ogg")
-oly_shutter_sound := #load("../assets/olympus_em1_m3_125th.ogg")
-lumix_shutter_sound := #load("../assets/lumix_gx9_125th.ogg")
-neuton_regular := #load("../assets/fonts/neuton/Neuton-Regular.ttf")
 liberation_serif_regular := #load("../assets/fonts/liberation_serif/LiberationSerif-Regular.ttf")
+
+neo_zero_buildings_02 := #load("../assets/neo_zero/neo_zero_buildings_02.png")
+neo_zero_props_02_free := #load("../assets/neo_zero/neo_zero_props_02_free.png")
+neo_zero_tileset_02 := #load("../assets/neo_zero/neo_zero_tileset_02.png")
+neo_zero_buildings__lights_off_02 := #load("../assets/neo_zero/neo_zero_buildings__lights_off_02.png")
+neo_zero_dungeon_02 := #load("../assets/neo_zero/neo_zero_dungeon_02.png")
+neo_zero_props_02 := #load("../assets/neo_zero/neo_zero_props_02.png")
+neo_zero_char_01 := #load("../assets/neo_zero/neo_zero_char_01.png")
+neo_zero_props_and_items_01 := #load("../assets/neo_zero/neo_zero_props_and_items_01.png")
+neo_zero_tiles_and_buildings_01 := #load("../assets/neo_zero/neo_zero_tiles_and_buildings_01.png")
 
 rect_min_dim :: proc(min, dim: rl.Vector2) -> rl.Rectangle {
     return rl.Rectangle{
@@ -62,6 +67,7 @@ color_pink := color_from_hex("#ec39c6")
 color_navy := color_from_hex("#3636cc")
 color_gold := color_from_hex("#ffd700")
 color_yellow := color_from_hex("#ffff00")
+color_original := color_from_hex("#ffffff")
 
 Resource_Type :: enum {
     RESOURCE_NONE,
@@ -75,6 +81,8 @@ Resource :: struct {
     filename: string,
     data: ^[]byte,
     rl_data: union { rl.Texture2D, rl.Sound, Font },
+    size: rl.Rectangle, // for textures/images
+    tileset: bool,
 }
 
 load_image_resource :: proc(resource: ^Resource) -> (ok: bool) {
@@ -86,6 +94,7 @@ load_image_resource :: proc(resource: ^Resource) -> (ok: bool) {
         return
     }
     resource.rl_data = rl.LoadTextureFromImage(image)
+    resource.size = {0, 0, f32(image.width), f32(image.height)}
     ok = true
     return
 }
@@ -215,6 +224,8 @@ Game_Window :: struct {
     title_font: Font,
     menu_font: Font,
 
+    title_resource: cstring,
+
     floor_tiles_sprite: Sprite,
     runner_sprite: Sprite,
     thunder_playing: bool,
@@ -223,7 +234,7 @@ Game_Window :: struct {
 
     debug_font: Font,
 
-    dim: rl.Vector2,
+    rect: rl.Rectangle,
 
     quit: bool,
 }
@@ -233,51 +244,87 @@ game_window := Game_Window{}
 
 update_window_dim :: proc() {
     // We use screen functions here because GetRenderWidth is broken on macos (deliberately!)
-    game_window.dim.x = f32(rl.GetScreenWidth())
-    game_window.dim.y = f32(rl.GetScreenHeight())
+    game_window.rect.width = f32(rl.GetScreenWidth())
+    game_window.rect.height = f32(rl.GetScreenHeight())
 }
 
 init_game :: proc() -> bool {
     update_window_dim()
     setup_main_menu()
 
-   game_window.resources["floor_tiles.png"] = Resource {
+    game_window.resources["neo_zero_buildings_02.png"] = Resource {
         type = .RESOURCE_IMAGE,
-        filename = "floor_tiles.png",
-        data = &floor_tiles_image,
+        filename = "neo_zero_buildings_02.png",
+        data = &neo_zero_buildings_02,
+        tileset = true,
     }
-    game_window.resources["runner.png"] = Resource {
+    game_window.resources["neo_zero_props_02_free.png"] = Resource {
         type = .RESOURCE_IMAGE,
-        filename = "runner.png",
-        data = &runner_image,
+        filename = "neo_zero_props_02_free.png",
+        data = &neo_zero_props_02_free,
+        tileset = true,
     }
-    game_window.resources["thunderstorm.ogg"] = Resource {
-        type = .RESOURCE_SOUND,
-        filename = "thunderstorm.ogg",
-        data = &thunderstorm_sound,
+    game_window.resources["neo_zero_tileset_02.png"] = Resource {
+        type = .RESOURCE_IMAGE,
+        filename = "neo_zero_tileset_02.png",
+        data = &neo_zero_tileset_02,
+        tileset = true,
     }
-    game_window.resources["olympus_em1_m3_125th.ogg"] = Resource {
-        type = .RESOURCE_SOUND,
-        filename = "olympus_em1_m3_125th.ogg",
-        data = &oly_shutter_sound,
+    game_window.resources["neo_zero_buildings__lights_off_02.png"] = Resource {
+        type = .RESOURCE_IMAGE,
+        filename = "neo_zero_buildings__lights_off_02.png",
+        data = &neo_zero_buildings__lights_off_02,
+        tileset = true,
     }
-    game_window.resources["lumix_gx9_125th.ogg"] = Resource {
-        type = .RESOURCE_SOUND,
-        filename = "lumix_gx9_125th.ogg",
-        data = &lumix_shutter_sound,
+    game_window.resources["neo_zero_dungeon_02.png"] = Resource {
+        type = .RESOURCE_IMAGE,
+        filename = "neo_zero_dungeon_02.png",
+        data = &neo_zero_dungeon_02,
+        tileset = true,
+    }
+    game_window.resources["neo_zero_props_02.png"] = Resource {
+        type = .RESOURCE_IMAGE,
+        filename = "neo_zero_props_02.png",
+        data = &neo_zero_props_02,
+        tileset = true,
+    }
+    game_window.resources["neo_zero_char_01.png"] = Resource {
+        type = .RESOURCE_IMAGE,
+        filename = "neo_zero_char_01.png",
+        data = &neo_zero_char_01,
+        tileset = true,
+    }
+    game_window.resources["neo_zero_props_and_items_01.png"] = Resource {
+        type = .RESOURCE_IMAGE,
+        filename = "neo_zero_props_and_items_01.png",
+        data = &neo_zero_props_and_items_01,
+        tileset = true,
+    }
+    game_window.resources["neo_zero_tiles_and_buildings_01.png"] = Resource {
+        type = .RESOURCE_IMAGE,
+        filename = "neo_zero_tiles_and_buildings_01.png",
+        data = &neo_zero_tiles_and_buildings_01,
+        tileset = true,
     }
     game_window.resources["title_font"] = Resource {
         type = .RESOURCE_FONT,
-        filename = "Neuton-Regular.ttf",
+        filename = "LiberationSerif-Regular.ttf",
         data = &liberation_serif_regular,
         rl_data = Font { size = 220.0 },
     }
     game_window.resources["menu_font"] = Resource {
         type = .RESOURCE_FONT,
-        filename = "Neuton-Regular.ttf",
+        filename = "LiberationSerif-Regular.ttf",
         data = &liberation_serif_regular,
         rl_data = Font { size = 80.0 },
     }
+    game_window.resources["info_font"] = Resource {
+        type = .RESOURCE_FONT,
+        filename = "LiberationSerif-Regular.ttf",
+        data = &liberation_serif_regular,
+        rl_data = Font { size = 48.0 },
+    }
+    game_window.title_resource = strings.clone_to_cstring("neo_zero_buildings_02.png")
 
     for resource_key in game_window.resources {
         if !load_resource(&game_window.resources[resource_key]) {
@@ -285,36 +332,36 @@ init_game :: proc() -> bool {
             assert(false)
         }
     }
-    {
-        // Play+pause thunderstorm so that it can be resumed and paused later
-        thunderstorm := game_window.resources["thunderstorm.ogg"].rl_data.(rl.Sound)
-        rl.PlaySound(thunderstorm)
-        rl.PauseSound(thunderstorm)
-    }
+    // {
+    //     // Play+pause thunderstorm so that it can be resumed and paused later
+    //     thunderstorm := game_window.resources["thunderstorm.ogg"].rl_data.(rl.Sound)
+    //     rl.PlaySound(thunderstorm)
+    //     rl.PauseSound(thunderstorm)
+    // }
 
-    floor_texture_dim := dim_from_texture(game_window.resources["floor_tiles.png"].rl_data.(rl.Texture2D))
-    game_window.floor_tiles_sprite = Sprite {
-        debug_name = "floor_tile",
-        texture_name = "floor_tiles.png",
-        frames = []Frame{
-            Frame{
-               duration = 100.0,
-               name = "frame",
-               rect = rl.Rectangle{0, 0, 64, 64},
-            },
-        },
-        frame_dim = floor_texture_dim,
-        resource = &game_window.resources["floor_tiles.png"],
-    }
-    split_into_frames(&game_window.floor_tiles_sprite, 1, 1, 0.0)
+    // floor_texture_dim := dim_from_texture(game_window.resources["floor_tiles.png"].rl_data.(rl.Texture2D))
+    // game_window.floor_tiles_sprite = Sprite {
+    //     debug_name = "floor_tile",
+    //     texture_name = "floor_tiles.png",
+    //     frames = []Frame{
+    //         Frame{
+    //            duration = 100.0,
+    //            name = "frame",
+    //            rect = rl.Rectangle{0, 0, 64, 64},
+    //         },
+    //     },
+    //     frame_dim = floor_texture_dim,
+    //     resource = &game_window.resources["floor_tiles.png"],
+    // }
+    // split_into_frames(&game_window.floor_tiles_sprite, 1, 1, 0.0)
 
-    runner_texture_dim := dim_from_texture(game_window.resources["runner.png"].rl_data.(rl.Texture2D))
-    game_window.runner_sprite = Sprite {
-        debug_name = "runner",
-        texture_name = "runner.png",
-        resource = &game_window.resources["runner.png"],
-    }
-    split_into_frames(&game_window.runner_sprite, 4, 4, 0.04)
+    // runner_texture_dim := dim_from_texture(game_window.resources["runner.png"].rl_data.(rl.Texture2D))
+    // game_window.runner_sprite = Sprite {
+    //     debug_name = "runner",
+    //     texture_name = "runner.png",
+    //     resource = &game_window.resources["runner.png"],
+    // }
+    // split_into_frames(&game_window.runner_sprite, 4, 4, 0.04)
 
     return true
 }
@@ -322,18 +369,76 @@ init_game :: proc() -> bool {
 title_screen :: proc(dt: f32) {
     if rl.IsKeyPressed(.ENTER) {
         goto_main_menu()
+    } else if rl.IsKeyPressed(.DOWN) {
+        all_keys : [dynamic]string
+        for key in game_window.resources {
+            if game_window.resources[key].type == .RESOURCE_IMAGE && game_window.resources[key].tileset {
+                append(&all_keys, key)
+            }
+        }
+        idx, found := slice.linear_search(all_keys[:], string(game_window.title_resource))
+        assert(found)
+        next_idx := (idx + 1) % len(all_keys)
+        delete(game_window.title_resource)
+        game_window.title_resource = strings.clone_to_cstring(all_keys[next_idx])
     }
 
     rl.BeginDrawing()
     defer rl.EndDrawing()
     rl.ClearBackground(color_navy)
-    title_font := game_window.resources["title_font"].rl_data.(Font)
-    text_size := rl.MeasureTextEx(title_font.font, game_title, title_font.size, 0.0)
-    pos := rl.Vector2{
-        game_window.dim.x / 2.0 - text_size.x / 2.0,
-        game_window.dim.y / 2.0 - text_size.y / 2.0,
+
+    window_rect := game_window.rect
+    {
+        font := game_window.resources["info_font"].rl_data.(Font)
+        text_size := rl.MeasureTextEx(font.font, game_window.title_resource, font.size, 0.0)
+        rl.DrawTextEx(font.font, game_window.title_resource, rl.Vector2{}, font.size, 0.0, color_black)
+        window_rect.y += text_size.y
+        window_rect.height -= text_size.y
     }
-    rl.DrawTextEx(title_font.font, game_title, pos, title_font.size, 0.0, color_gold)
+    {
+        resource := game_window.resources[string(game_window.title_resource)]
+        source := resource.size
+        origin := rl.Vector2{}
+        rotation := f32(0)
+        aspect := source.width / source.height
+        dest := rl.Rectangle{}
+        percentage := f32(0.98)
+        // try % of window height
+        dest.height = percentage * window_rect.height
+        dest.width = aspect * dest.height
+        dest.x = (window_rect.width - dest.width) / 2.0
+        dest.y = (window_rect.height - dest.height) / 2.0 + window_rect.y
+        if dest.x < 0 || dest.y < 0 {
+            // try % of window width
+            dest.width = percentage * window_rect.width
+            dest.height = dest.width / aspect
+            dest.x = (window_rect.width - dest.width) / 2.0
+            dest.y = (window_rect.height - dest.height) / 2.0 + window_rect.y
+        }
+        rl.DrawTexturePro(resource.rl_data.(rl.Texture2D), source, dest, origin, rotation, color_original)
+        magnification := dest.width / source.width
+        cell := dest
+        cell.width = f32(16) * magnification
+        cell.height = f32(16) * magnification
+        bottom := dest.y + dest.height - 1
+        right := dest.x + dest.width - 1
+        for cell.y < bottom {
+            for cell.x < right {
+                rl.DrawRectangleLinesEx(cell, 1.0, color_red)
+                cell.x += f32(16) * magnification
+            }
+            cell.x = dest.x
+            cell.y += f32(16) * magnification
+        }
+    }
+
+    // title_font := game_window.resources["title_font"].rl_data.(Font)
+    // text_size := rl.MeasureTextEx(title_font.font, game_title, title_font.size, 0.0)
+    // pos := rl.Vector2{
+    //     game_window.dim.x / 2.0 - text_size.x / 2.0,
+    //     game_window.dim.y / 2.0 - text_size.y / 2.0,
+    // }
+    // rl.DrawTextEx(title_font.font, game_title, pos, title_font.size, 0.0, color_gold)
 }
 
 MAX_MENU_ITEMS :: 16
@@ -400,8 +505,8 @@ menu_screen :: proc(dt: f32) {
         total_size.y += item_size.y
     }
     pos := rl.Vector2{
-        game_window.dim.x / 2.0 - total_size.x / 2.0,
-        game_window.dim.y / 2.0 - total_size.y / 2.0,
+        game_window.rect.width / 2.0 - total_size.x / 2.0,
+        game_window.rect.height / 2.0 - total_size.y / 2.0,
     }
     for item, idx in small_array.slice(&game_window.menu.items) {
         rl.DrawTextEx(menu_font.font, item.label, pos, menu_font.size, 0.0, color_gold)
@@ -468,7 +573,6 @@ update_and_render :: proc(dt: f32) {
         game_window.quit = true
     }
 
-    // TODO: switch between title screen and level screen
     #partial switch game_window.game_state {
         case .STATE_TITLE: title_screen(dt)
         case .STATE_LEVEL: level_screen(dt)
@@ -484,7 +588,9 @@ main :: proc() {
 
     rl.InitAudioDevice()
     rl.InitWindow(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT,  game_title)
-    rl.SetExitKey(rl.KeyboardKey.KEY_NULL)
+    when !ODIN_DEBUG {
+        rl.SetExitKey(rl.KeyboardKey.KEY_NULL) // disable exit with escape in release mode
+    }
 
     if !init_game() {
         os.exit(1)
