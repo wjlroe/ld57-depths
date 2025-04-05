@@ -11,14 +11,14 @@ if "%1"=="all" set build_release=yes
 
 echo Debug build
 odin build src ^
-    -out:build/base_code_debug.exe ^
+    -out:build/depths_debug.exe ^
     -build-mode:exe ^
     -subsystem:console ^
     -debug ^
     -o:minimal ^
     -show-timings || goto :error
 
-if "%run_after_build%"=="yes" .\build\base_code_debug.exe
+if "%run_after_build%"=="yes" .\build\depths_debug.exe
 
 rem echo Web build
 rem odin build src ^
@@ -29,7 +29,7 @@ if NOT "%1"=="all" goto end
 
 echo Release build
 odin build src ^
-    -out:build/base_code.exe ^
+    -out:build/depths.exe ^
     -build-mode:exe ^
     -subsystem:windows ^
     -o:speed ^

@@ -9,7 +9,7 @@ import "core:strconv"
 import "core:strings"
 import rl "vendor:raylib"
 
-game_title :: "Base Code"
+game_title :: "Depths"
 DEFAULT_WINDOW_WIDTH  :: 1280
 DEFAULT_WINDOW_HEIGHT :: 800
 

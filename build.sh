@@ -79,16 +79,16 @@ build() {
     mkdir -p "${build_dir}"
 
     build_args=""
-    binary_name=base_code
+    binary_name=depths
     if [ "${odin_os}" = darwin ]; then
         build_args="${build_args} -extra-linker-flags:\"-ld_classic\""
     fi
-    binary_file="${build_dir}/${binary_name}"
+    binary_file="${build_dir}/${binary_name}_debug"
     echo "Building debug binary ${binary_file} for target ${target}"
 
     $odin_cmd build src \
         ${build_args} \
-        -out:"${binary_file}"\
+        -out:"${binary_file}" \
         -build-mode:exe \
         -target:"${target}" \
         -debug \
@@ -99,14 +99,13 @@ build() {
     (which ldd > /dev/null && ldd "${binary_file}") || true
 
     if [ "${build_all}" = all ]; then
-        binary_name=base_code_release
         if [ "${odin_os}" = darwin ]; then
-            binary_name=base_code_release.app
+            binary_name=depths.app
         fi
         binary_file="${build_dir}/${binary_name}"
         if [ "${odin_os}" = darwin ]; then
             target="darwin_amd64"
-            binary_name=base_code_release_amd64
+            binary_name=depths_amd64
             binary_file="${build_dir}/${binary_name}"
             echo "Building release binary ${binary_file} for target ${target}"
             $odin_cmd build src \
@@ -118,7 +117,7 @@ build() {
                 -disable-assert \
                 -show-timings
             target="darwin_arm64"
-            binary_name=base_code_release_arm64
+            binary_name=depths_arm64
             binary_file="${build_dir}/${binary_name}"
             echo "Building release binary ${binary_file} for target ${target}"
             $odin_cmd build src \
@@ -129,9 +128,9 @@ build() {
                 -o:speed \
                 -disable-assert \
                 -show-timings
-            binary_name=base_code_release
+            binary_name=depths
             binary_file="${build_dir}/${binary_name}"
-            lipo -create -output "${binary_file}" "${build_dir}/base_code_release_arm64" "${build_dir}/base_code_release_amd64"
+            lipo -create -output "${binary_file}" "${build_dir}/depths_code_arm64" "${build_dir}/depths_amd64"
         else
             echo "Building release binary ${binary_file} for target ${target}"
             $odin_cmd build src \
@@ -149,6 +148,6 @@ build() {
     fi
 }
 
-if [ -z "${BASE_CODE_BUILD_SCRIPT:-}" ]; then
+if [ -z "${DEPTHS_BUILD_SCRIPT:-}" ]; then
     build "$(uname -s)" "$(uname -m)" "${build_all}"
 fi

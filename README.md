@@ -1,26 +1,12 @@
-# Ludum Dare: my base-code (in Odin)
+# Ludum Dare 57: Depths
 
-This is the base codebase for my attempts at Ludum Dare (in Odin). It is a
-work-in-progress, not usable by anyone else yet.
+WIP
 
 ## TODO:
 
-- [x] Title screen
-- [ ] Menu screen
-- [ ] Load a level from LDtk
-- [ ] Load 3D object model (fast obj read?)
-- [ ] Render 3D mesh/object
+
 
 ## Setup
-
-### Windows
-
-Setup the symlink that VSCode will need to open the workspace file:
-
-```
- cmd /c mklink /d odin-source C:\dev\odin\dev-master
- cmd /c mklink /d raylib-source C:\Users\will\Code\source\raylib
-```
 
 ## Assets
 

@@ -7,14 +7,14 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug base_code",
-            "program": "${workspaceFolder}/build/base_code.exe",
+            "name": "Debug depths",
+            "program": "${workspaceFolder}/build/depths_debug.exe",
             "cwd": "${workspaceFolder}",
             "osx": {
-                "program": "${workspaceFolder}/build/base_code.app"
+                "program": "${workspaceFolder}/build/depths_debug.app"
             },
             "linux": {
-                "program": "${workspaceFolder}/build/base_code"
+                "program": "${workspaceFolder}/build/depths_debug"
             }
         }
     ]
