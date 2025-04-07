@@ -1,6 +1,7 @@
 package main
 
 import "base:runtime"
+import "core:fmt"
 import "core:path/filepath"
 import "core:log"
 import "core:os"
@@ -82,7 +83,6 @@ Resource :: struct {
     data: ^[]byte,
     rl_data: union { rl.Texture2D, rl.Sound, Font },
     size: rl.Rectangle, // for textures/images
-    tileset: bool,
 }
 
 load_image_resource :: proc(resource: ^Resource) -> (ok: bool) {
@@ -211,15 +211,52 @@ update_sprite :: proc(sprite: ^Sprite, dt: f32) {
     }
 }
 
+Tileset_Variation :: struct {
+    resource_key: string,
+    label: string,
+}
+
+MAX_TILESET_VARIATIONS :: 8
+
+Tileset :: struct {
+    variations: small_array.Small_Array(MAX_TILESET_VARIATIONS, Tileset_Variation),
+}
+
+push_single_variation_tileset :: proc(resource_key: string, data: ^[]u8) {
+    game_window.resources[resource_key] = Resource {
+        type = .RESOURCE_IMAGE,
+        filename = resource_key,
+        data = data,
+    }
+
+    one_and_only := Tileset_Variation{
+        resource_key = resource_key,
+        label = "NO_VARIATION",
+    }
+    tileset := Tileset{}
+    assert(small_array.push_back(&tileset.variations, one_and_only));
+    assert(small_array.push_back(&game_window.tilesets, tileset))
+}
+
 Game_State :: enum {
     STATE_TITLE,
     STATE_MENU,
     STATE_LEVEL,
+    STATE_EDITOR,
 }
+
+Game_Editor :: struct {
+    current_tileset_idx: int,
+    current_tileset_variation_idx: int,
+}
+
+MAX_NUM_TILESETS :: 16
 
 Game_Window :: struct {
     game_state: Game_State,
     resources: map[string]Resource,
+    tilesets: small_array.Small_Array(MAX_NUM_TILESETS, Tileset),
+    editor: Game_Editor,
 
     title_font: Font,
     menu_font: Font,
@@ -242,6 +279,34 @@ Game_Window :: struct {
 @(require)
 game_window := Game_Window{}
 
+editor_next_tileset :: proc() {
+    game_window.editor.current_tileset_idx += 1
+    game_window.editor.current_tileset_idx %= small_array.len(game_window.tilesets)
+    game_window.editor.current_tileset_variation_idx = 0
+}
+
+editor_prev_tileset :: proc() {
+    game_window.editor.current_tileset_idx -= 1
+    if game_window.editor.current_tileset_idx < 0 {
+        game_window.editor.current_tileset_idx = small_array.len(game_window.tilesets) - 1
+    }
+    game_window.editor.current_tileset_variation_idx = 0
+}
+
+editor_next_tileset_variation :: proc() {
+    current_tileset := small_array.get(game_window.tilesets, game_window.editor.current_tileset_idx)
+    game_window.editor.current_tileset_variation_idx += 1
+    game_window.editor.current_tileset_variation_idx %= small_array.len(current_tileset.variations)
+}
+
+editor_prev_tileset_variation :: proc() {
+    current_tileset := small_array.get(game_window.tilesets, game_window.editor.current_tileset_idx)
+    game_window.editor.current_tileset_variation_idx -= 1
+    if game_window.editor.current_tileset_variation_idx < 0 {
+        game_window.editor.current_tileset_variation_idx = small_array.len(current_tileset.variations) - 1
+    }
+}
+
 update_window_dim :: proc() {
     // We use screen functions here because GetRenderWidth is broken on macos (deliberately!)
     game_window.rect.width = f32(rl.GetScreenWidth())
@@ -256,56 +321,32 @@ init_game :: proc() -> bool {
         type = .RESOURCE_IMAGE,
         filename = "neo_zero_buildings_02.png",
         data = &neo_zero_buildings_02,
-        tileset = true,
-    }
-    game_window.resources["neo_zero_props_02_free.png"] = Resource {
-        type = .RESOURCE_IMAGE,
-        filename = "neo_zero_props_02_free.png",
-        data = &neo_zero_props_02_free,
-        tileset = true,
-    }
-    game_window.resources["neo_zero_tileset_02.png"] = Resource {
-        type = .RESOURCE_IMAGE,
-        filename = "neo_zero_tileset_02.png",
-        data = &neo_zero_tileset_02,
-        tileset = true,
     }
     game_window.resources["neo_zero_buildings__lights_off_02.png"] = Resource {
         type = .RESOURCE_IMAGE,
         filename = "neo_zero_buildings__lights_off_02.png",
         data = &neo_zero_buildings__lights_off_02,
-        tileset = true,
     }
-    game_window.resources["neo_zero_dungeon_02.png"] = Resource {
-        type = .RESOURCE_IMAGE,
-        filename = "neo_zero_dungeon_02.png",
-        data = &neo_zero_dungeon_02,
-        tileset = true,
-    }
-    game_window.resources["neo_zero_props_02.png"] = Resource {
-        type = .RESOURCE_IMAGE,
-        filename = "neo_zero_props_02.png",
-        data = &neo_zero_props_02,
-        tileset = true,
-    }
-    game_window.resources["neo_zero_char_01.png"] = Resource {
-        type = .RESOURCE_IMAGE,
-        filename = "neo_zero_char_01.png",
-        data = &neo_zero_char_01,
-        tileset = true,
-    }
-    game_window.resources["neo_zero_props_and_items_01.png"] = Resource {
-        type = .RESOURCE_IMAGE,
-        filename = "neo_zero_props_and_items_01.png",
-        data = &neo_zero_props_and_items_01,
-        tileset = true,
-    }
-    game_window.resources["neo_zero_tiles_and_buildings_01.png"] = Resource {
-        type = .RESOURCE_IMAGE,
-        filename = "neo_zero_tiles_and_buildings_01.png",
-        data = &neo_zero_tiles_and_buildings_01,
-        tileset = true,
-    }
+
+    buildings_tileset := Tileset{}
+    assert(small_array.push_back(&buildings_tileset.variations, Tileset_Variation{
+        resource_key = "neo_zero_buildings_02.png",
+        label = "lights_on",
+    }))
+    assert(small_array.push_back(&buildings_tileset.variations, Tileset_Variation{
+        resource_key = "neo_zero_buildings__lights_off_02.png",
+        label = "lights_off",
+    }))
+    assert(small_array.push_back(&game_window.tilesets, buildings_tileset))
+
+    push_single_variation_tileset("neo_zero_props_02_free.png", &neo_zero_props_02_free)
+    push_single_variation_tileset("neo_zero_tileset_02.png", &neo_zero_tileset_02)
+    push_single_variation_tileset("neo_zero_dungeon_02.png", &neo_zero_dungeon_02)
+    push_single_variation_tileset("neo_zero_props_02.png", &neo_zero_props_02)
+    push_single_variation_tileset("neo_zero_char_01.png", &neo_zero_char_01)
+    push_single_variation_tileset("neo_zero_props_and_items_01.png", &neo_zero_props_and_items_01)
+    push_single_variation_tileset("neo_zero_tiles_and_buildings_01.png", &neo_zero_tiles_and_buildings_01)
+
     game_window.resources["title_font"] = Resource {
         type = .RESOURCE_FONT,
         filename = "LiberationSerif-Regular.ttf",
@@ -324,7 +365,6 @@ init_game :: proc() -> bool {
         data = &liberation_serif_regular,
         rl_data = Font { size = 48.0 },
     }
-    game_window.title_resource = strings.clone_to_cstring("neo_zero_buildings_02.png")
 
     for resource_key in game_window.resources {
         if !load_resource(&game_window.resources[resource_key]) {
@@ -369,18 +409,34 @@ init_game :: proc() -> bool {
 title_screen :: proc(dt: f32) {
     if rl.IsKeyPressed(.ENTER) {
         goto_main_menu()
+    } else if rl.IsKeyPressed(.F1) {
+        goto_editor()
+    }
+
+    rl.BeginDrawing()
+    defer rl.EndDrawing()
+    rl.ClearBackground(color_navy)
+
+    title_font := game_window.resources["title_font"].rl_data.(Font)
+    text_size := rl.MeasureTextEx(title_font.font, game_title, title_font.size, 0.0)
+    pos := rl.Vector2{
+        game_window.rect.width / 2.0 - text_size.x / 2.0,
+        game_window.rect.height / 2.0 - text_size.y / 2.0,
+    }
+    rl.DrawTextEx(title_font.font, game_title, pos, title_font.size, 0.0, color_gold)
+}
+
+editor_screen :: proc(dt: f32) {
+    if rl.IsKeyPressed(.ENTER) {
+        goto_main_menu()
+    } else if rl.IsKeyPressed(.UP) {
+        editor_prev_tileset()
     } else if rl.IsKeyPressed(.DOWN) {
-        all_keys : [dynamic]string
-        for key in game_window.resources {
-            if game_window.resources[key].type == .RESOURCE_IMAGE && game_window.resources[key].tileset {
-                append(&all_keys, key)
-            }
-        }
-        idx, found := slice.linear_search(all_keys[:], string(game_window.title_resource))
-        assert(found)
-        next_idx := (idx + 1) % len(all_keys)
-        delete(game_window.title_resource)
-        game_window.title_resource = strings.clone_to_cstring(all_keys[next_idx])
+        editor_next_tileset()
+    } else if rl.IsKeyPressed(.RIGHT) {
+        editor_next_tileset_variation()
+    } else if rl.IsKeyPressed(.LEFT) {
+        editor_prev_tileset_variation()
     }
 
     rl.BeginDrawing()
@@ -389,17 +445,23 @@ title_screen :: proc(dt: f32) {
 
     window_rect := game_window.rect
     {
-        pos := rl.Vector2{}
-        font := game_window.resources["info_font"].rl_data.(Font)
-        text_size := rl.MeasureTextEx(font.font, game_window.title_resource, font.size, 0.0)
-        rl.DrawTextEx(font.font, game_window.title_resource, pos, font.size, 0.0, color_black)
-        window_rect.y += text_size.y
-        window_rect.height -= text_size.y
-        pos.x += text_size.x + 20
-        rl.DrawTextEx(font.font, "[test_label]", pos, font.size, 0.0, color_black)
-    }
-    {
-        resource := game_window.resources[string(game_window.title_resource)]
+        current_tileset := small_array.get(game_window.tilesets, game_window.editor.current_tileset_idx)
+        current_variation := small_array.get(current_tileset.variations, game_window.editor.current_tileset_variation_idx)
+        resource := game_window.resources[current_variation.resource_key]
+
+        {
+            pos := rl.Vector2{}
+            font := game_window.resources["info_font"].rl_data.(Font)
+            resource_key := strings.clone_to_cstring(current_variation.resource_key, context.temp_allocator)
+            text_size := rl.MeasureTextEx(font.font, resource_key, font.size, 0.0)
+            rl.DrawTextEx(font.font, resource_key, pos, font.size, 0.0, color_black)
+            window_rect.y += text_size.y
+            window_rect.height -= text_size.y
+            pos.x += text_size.x + 20
+            variation_label := fmt.caprintf("[{}]", current_variation.label, allocator = context.temp_allocator)
+            rl.DrawTextEx(font.font, variation_label, pos, font.size, 0.0, color_black)
+        }
+
         source := resource.size
         origin := rl.Vector2{}
         rotation := f32(0)
@@ -439,13 +501,6 @@ title_screen :: proc(dt: f32) {
         }
     }
 
-    // title_font := game_window.resources["title_font"].rl_data.(Font)
-    // text_size := rl.MeasureTextEx(title_font.font, game_title, title_font.size, 0.0)
-    // pos := rl.Vector2{
-    //     game_window.dim.x / 2.0 - text_size.x / 2.0,
-    //     game_window.dim.y / 2.0 - text_size.y / 2.0,
-    // }
-    // rl.DrawTextEx(title_font.font, game_title, pos, title_font.size, 0.0, color_gold)
 }
 
 MAX_MENU_ITEMS :: 16
@@ -477,6 +532,10 @@ setup_main_menu :: proc() {
 goto_main_menu :: proc() {
     game_window.menu = global_main_menu
     game_window.game_state = .STATE_MENU
+}
+
+goto_editor :: proc() {
+    game_window.game_state = .STATE_EDITOR
 }
 
 goto_new_game :: proc() {
@@ -581,9 +640,10 @@ update_and_render :: proc(dt: f32) {
     }
 
     #partial switch game_window.game_state {
-        case .STATE_TITLE: title_screen(dt)
-        case .STATE_LEVEL: level_screen(dt)
-        case .STATE_MENU:  menu_screen(dt)
+        case .STATE_TITLE:  title_screen(dt)
+        case .STATE_EDITOR: editor_screen(dt)
+        case .STATE_LEVEL:  level_screen(dt)
+        case .STATE_MENU:   menu_screen(dt)
     }
 }
 
