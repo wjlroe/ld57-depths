@@ -389,11 +389,14 @@ title_screen :: proc(dt: f32) {
 
     window_rect := game_window.rect
     {
+        pos := rl.Vector2{}
         font := game_window.resources["info_font"].rl_data.(Font)
         text_size := rl.MeasureTextEx(font.font, game_window.title_resource, font.size, 0.0)
-        rl.DrawTextEx(font.font, game_window.title_resource, rl.Vector2{}, font.size, 0.0, color_black)
+        rl.DrawTextEx(font.font, game_window.title_resource, pos, font.size, 0.0, color_black)
         window_rect.y += text_size.y
         window_rect.height -= text_size.y
+        pos.x += text_size.x + 20
+        rl.DrawTextEx(font.font, "[test_label]", pos, font.size, 0.0, color_black)
     }
     {
         resource := game_window.resources[string(game_window.title_resource)]
@@ -424,7 +427,11 @@ title_screen :: proc(dt: f32) {
         right := dest.x + dest.width - 1
         for cell.y < bottom {
             for cell.x < right {
-                rl.DrawRectangleLinesEx(cell, 1.0, color_red)
+                color := color_red
+                if rl.CheckCollisionPointRec(rl.GetMousePosition(), cell) {
+                    color = color_green
+                }
+                rl.DrawRectangleLinesEx(cell, 1.0, color)
                 cell.x += f32(16) * magnification
             }
             cell.x = dest.x
