@@ -222,19 +222,22 @@ Tileset :: struct {
     variations: small_array.Small_Array(MAX_TILESET_VARIATIONS, Tileset_Variation),
 }
 
-push_single_variation_tileset :: proc(resource_key: string, data: ^[]u8) {
+push_tileset_variation :: proc(tileset: ^Tileset, resource_key: string, data: ^[]u8, variation_label: string) {
     game_window.resources[resource_key] = Resource {
         type = .RESOURCE_IMAGE,
         filename = resource_key,
         data = data,
     }
-
-    one_and_only := Tileset_Variation{
+    variation := Tileset_Variation{
         resource_key = resource_key,
-        label = "NO_VARIATION",
+        label = variation_label,
     }
+    assert(small_array.push_back(&tileset.variations, variation))
+}
+
+push_single_variation_tileset :: proc(resource_key: string, data: ^[]u8) {
     tileset := Tileset{}
-    assert(small_array.push_back(&tileset.variations, one_and_only));
+    push_tileset_variation(&tileset, resource_key, data, "NO_VARIATION")
     assert(small_array.push_back(&game_window.tilesets, tileset))
 }
 
@@ -313,30 +316,22 @@ update_window_dim :: proc() {
     game_window.rect.height = f32(rl.GetScreenHeight())
 }
 
+push_font :: proc(label: string, filename: string, data: ^[]u8, size: f32) {
+    game_window.resources[label] = Resource {
+        type = .RESOURCE_FONT,
+        filename = filename,
+        data = data,
+        rl_data = Font { size = size },
+    }
+}
+
 init_game :: proc() -> bool {
     update_window_dim()
     setup_main_menu()
 
-    game_window.resources["neo_zero_buildings_02.png"] = Resource {
-        type = .RESOURCE_IMAGE,
-        filename = "neo_zero_buildings_02.png",
-        data = &neo_zero_buildings_02,
-    }
-    game_window.resources["neo_zero_buildings__lights_off_02.png"] = Resource {
-        type = .RESOURCE_IMAGE,
-        filename = "neo_zero_buildings__lights_off_02.png",
-        data = &neo_zero_buildings__lights_off_02,
-    }
-
     buildings_tileset := Tileset{}
-    assert(small_array.push_back(&buildings_tileset.variations, Tileset_Variation{
-        resource_key = "neo_zero_buildings_02.png",
-        label = "lights_on",
-    }))
-    assert(small_array.push_back(&buildings_tileset.variations, Tileset_Variation{
-        resource_key = "neo_zero_buildings__lights_off_02.png",
-        label = "lights_off",
-    }))
+    push_tileset_variation(&buildings_tileset, "neo_zero_buildings_02.png", &neo_zero_buildings_02, "lights_on")
+    push_tileset_variation(&buildings_tileset, "neo_zero_buildings__lights_off_02.png", &neo_zero_buildings__lights_off_02, "lights_off")
     assert(small_array.push_back(&game_window.tilesets, buildings_tileset))
 
     push_single_variation_tileset("neo_zero_props_02_free.png", &neo_zero_props_02_free)
@@ -347,24 +342,9 @@ init_game :: proc() -> bool {
     push_single_variation_tileset("neo_zero_props_and_items_01.png", &neo_zero_props_and_items_01)
     push_single_variation_tileset("neo_zero_tiles_and_buildings_01.png", &neo_zero_tiles_and_buildings_01)
 
-    game_window.resources["title_font"] = Resource {
-        type = .RESOURCE_FONT,
-        filename = "LiberationSerif-Regular.ttf",
-        data = &liberation_serif_regular,
-        rl_data = Font { size = 220.0 },
-    }
-    game_window.resources["menu_font"] = Resource {
-        type = .RESOURCE_FONT,
-        filename = "LiberationSerif-Regular.ttf",
-        data = &liberation_serif_regular,
-        rl_data = Font { size = 80.0 },
-    }
-    game_window.resources["info_font"] = Resource {
-        type = .RESOURCE_FONT,
-        filename = "LiberationSerif-Regular.ttf",
-        data = &liberation_serif_regular,
-        rl_data = Font { size = 48.0 },
-    }
+    push_font("title_font", "LiberationSerif-Regular.ttf", &liberation_serif_regular, 220.0)
+    push_font("menu_font", "LiberationSerif-Regular.ttf", &liberation_serif_regular, 80.0)
+    push_font("info_font", "LiberationSerif-Regular.ttf", &liberation_serif_regular, 48.0)
 
     for resource_key in game_window.resources {
         if !load_resource(&game_window.resources[resource_key]) {
