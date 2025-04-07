@@ -302,6 +302,7 @@ editor_next_tileset :: proc() {
     game_window.editor.current_tileset_idx += 1
     game_window.editor.current_tileset_idx %= small_array.len(game_window.tilesets)
     game_window.editor.current_tileset_variation_idx = 0
+    small_array.clear(&game_window.editor.selected_cells)
 }
 
 editor_prev_tileset :: proc() {
@@ -310,6 +311,7 @@ editor_prev_tileset :: proc() {
         game_window.editor.current_tileset_idx = small_array.len(game_window.tilesets) - 1
     }
     game_window.editor.current_tileset_variation_idx = 0
+    small_array.clear(&game_window.editor.selected_cells)
 }
 
 editor_next_tileset_variation :: proc() {
