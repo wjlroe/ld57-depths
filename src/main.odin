@@ -248,9 +248,25 @@ Game_State :: enum {
     STATE_EDITOR,
 }
 
+MAX_SELECTABLE_CELLS :: 16
+
 Game_Editor :: struct {
     current_tileset_idx: int,
     current_tileset_variation_idx: int,
+    selected_cells: small_array.Small_Array(MAX_SELECTABLE_CELLS, rl.Rectangle),
+}
+
+editor_toggle_cell_select :: proc(cell: rl.Rectangle) {
+    for existing_cell, i in small_array.slice(&game_window.editor.selected_cells) {
+        if rl.CheckCollisionRecs(cell, existing_cell) {
+            small_array.unordered_remove(&game_window.editor.selected_cells, i)
+            return
+        }
+    }
+
+    if small_array.space(game_window.editor.selected_cells) > 0 {
+        assert(small_array.push_back(&game_window.editor.selected_cells, cell))
+    }
 }
 
 MAX_NUM_TILESETS :: 16
@@ -469,9 +485,17 @@ editor_screen :: proc(dt: f32) {
         right := dest.x + dest.width - 1
         for cell.y < bottom {
             for cell.x < right {
-                color := color_red
+                color := rl.RED
+                for selected_cell in small_array.slice(&game_window.editor.selected_cells) {
+                    if rl.CheckCollisionRecs(selected_cell, cell) {
+                        color = rl.GREEN
+                    }
+                }
                 if rl.CheckCollisionPointRec(rl.GetMousePosition(), cell) {
-                    color = color_green
+                    if rl.IsMouseButtonPressed(.LEFT) {
+                        editor_toggle_cell_select(cell)
+                    }
+                    color = rl.ORANGE
                 }
                 rl.DrawRectangleLinesEx(cell, 1.0, color)
                 cell.x += f32(16) * magnification
@@ -643,7 +667,6 @@ main :: proc() {
         os.exit(1)
     }
 
-    log.infof("going to start the render loop")
     log.infof("DPI: {}", rl.GetWindowScaleDPI())
     log.infof("Screen: {}x{}", rl.GetScreenWidth(), rl.GetScreenHeight())
     log.infof("Render: {}x{}", rl.GetRenderWidth(), rl.GetRenderHeight())
