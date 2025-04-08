@@ -2,9 +2,18 @@
 
 set -eu
 
-build_all="${1:-no}"
+build_all=no
+run_after_build=no
 
-odin_cmd=/opt/odin/dev-master/odin
+first_arg="${1:-}"
+
+if [ "${first_arg}" = "all" ]; then
+    build_all=yes
+elif [ "${first_arg}" = "run" ]; then
+    run_after_build=yes
+fi
+
+PATH="/opt/odin/2025-04:${PATH}"
 
 project_dir=$(cd -P -- "$(dirname -- "$0")" && printf '%s\n' "$(pwd -P)/$(dirname -- "$0")")
 cd "${project_dir}"
@@ -67,6 +76,7 @@ build() {
     os=$1
     arch=$2
     build_all="${3:-no}"
+    run_after_build="${4:-no}"
     odin_os=$(odin_os "${os}")
     odin_arch=$(odin_arch "${arch}")
     target="${odin_os}_${odin_arch}"
@@ -80,13 +90,10 @@ build() {
 
     build_args=""
     binary_name=depths
-    if [ "${odin_os}" = darwin ]; then
-        build_args="${build_args} -extra-linker-flags:\"-ld_classic\""
-    fi
     binary_file="${build_dir}/${binary_name}_debug"
     echo "Building debug binary ${binary_file} for target ${target}"
 
-    $odin_cmd build src \
+    odin build src \
         ${build_args} \
         -out:"${binary_file}" \
         -build-mode:exe \
@@ -98,7 +105,7 @@ build() {
     (which otool > /dev/null && otool -L "${binary_file}") || true
     (which ldd > /dev/null && ldd "${binary_file}") || true
 
-    if [ "${build_all}" = all ]; then
+    if [ "${build_all}" = yes ]; then
         if [ "${odin_os}" = darwin ]; then
             binary_name=depths.app
         fi
@@ -108,7 +115,7 @@ build() {
             binary_name=depths_amd64
             binary_file="${build_dir}/${binary_name}"
             echo "Building release binary ${binary_file} for target ${target}"
-            $odin_cmd build src \
+            odin build src \
                 -out:"${binary_file}"\
                 -build-mode:exe \
                 -target:"${target}" \
@@ -120,7 +127,7 @@ build() {
             binary_name=depths_arm64
             binary_file="${build_dir}/${binary_name}"
             echo "Building release binary ${binary_file} for target ${target}"
-            $odin_cmd build src \
+            odin build src \
                 -out:"${binary_file}"\
                 -build-mode:exe \
                 -target:"${target}" \
@@ -130,10 +137,10 @@ build() {
                 -show-timings
             binary_name=depths
             binary_file="${build_dir}/${binary_name}"
-            lipo -create -output "${binary_file}" "${build_dir}/depths_code_arm64" "${build_dir}/depths_amd64"
+            lipo -create -output "${binary_file}" "${build_dir}/depths_arm64" "${build_dir}/depths_amd64"
         else
             echo "Building release binary ${binary_file} for target ${target}"
-            $odin_cmd build src \
+            odin build src \
                 -out:"${binary_file}"\
                 -build-mode:exe \
                 -target:"${target}" \
@@ -145,9 +152,11 @@ build() {
         # Print out dynamic library dependencies
         (which otool > /dev/null && otool -L "${binary_file}") || true
         (which ldd > /dev/null && ldd "${binary_file}") || true
+    elif [ "${run_after_build}" = yes ]; then
+        ${binary_file}
     fi
 }
 
 if [ -z "${DEPTHS_BUILD_SCRIPT:-}" ]; then
-    build "$(uname -s)" "$(uname -m)" "${build_all}"
+    build "$(uname -s)" "$(uname -m)" "${build_all}" "${run_after_build}"
 fi
